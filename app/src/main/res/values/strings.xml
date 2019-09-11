@@ -21,6 +21,8 @@
 
     <string name="goOrder">Отправить</string>
     <string name="maxVal">Максимальный обьем</string>
+    <string name="postFollow">Поставить впереди</string>
+    <string name="postNachalo">Перепоставить</string>
     <string name="pereOrder">Перестановка ордера</string>
 
     <string name="dopTitle">Дополнительные функции</string>

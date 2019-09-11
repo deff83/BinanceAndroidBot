@@ -10,6 +10,8 @@ import com.binance.api.client.domain.account.Account;
 import com.binance.api.client.domain.account.AssetBalance;
 import com.binance.api.client.domain.account.Order;
 import com.binance.api.client.domain.account.request.OrderRequest;
+import com.binance.api.client.domain.general.ExchangeInfo;
+import com.binance.api.client.domain.general.SymbolInfo;
 import com.binance.api.client.domain.market.OrderBook;
 import com.binance.api.client.domain.market.TickerPrice;
 import com.example.myapplication.binance.APIBinance;
@@ -93,7 +95,7 @@ public class ServiceBin extends Service {
                     System.out.println(tikPrice);
 
                     binanceState.setTikPrice(tikPrice);
-                    ObservableSave.getObs().update(2);
+                    ObservableSave.getObs().update(5);
                 }catch(Exception e){
                     e.printStackTrace();
                 }
@@ -107,12 +109,11 @@ public class ServiceBin extends Service {
                     System.out.println(BinanceApiConstants.DEFAULT_RECEIVING_WINDOW);
                     System.out.println(apibinance.getClient().getServerTime());
                     System.out.println(System.currentTimeMillis());
-
-                    Account account = apibinance.getClient().getAccount(5000l, apibinance.getClient().getServerTime());
-
-                    binanceState.setAccount(account);
-                    account = null;
-                    ObservableSave.getObs().update(2);
+                    if (BinanceState.getInstance().isMyBalance()) {
+                        Account account = apibinance.getClient().getAccount(5000l, apibinance.getClient().getServerTime());
+                        binanceState.setAccount(account);
+                        ObservableSave.getObs().update(2);
+                    }
                 }catch(Exception e){
                     e.printStackTrace();
                 }
@@ -160,6 +161,27 @@ public class ServiceBin extends Service {
                 }
             }
         };
+        Runnable runnableExchengInfo = new Runnable() {
+            @Override
+            public void run() {
+                try{
+                    while(true) {
+                        ExchangeInfo excinfo = null;
+                        try {
+                            excinfo = apibinance.getClient().getExchangeInfo();
+                            BinanceState.getInstance().setExchangeInfo(excinfo);
+                        }catch(Exception e){
+
+                        }
+                        if(excinfo != null) break;
+                    }
+                }catch(Exception e){
+
+                }
+            }
+        };
+
+        new Thread(runnableExchengInfo).start();
 
         executor.scheduleWithFixedDelay(runn, 0, 5, TimeUnit.SECONDS);
         executor2.scheduleWithFixedDelay(runnAcc, 0, 50, TimeUnit.SECONDS);

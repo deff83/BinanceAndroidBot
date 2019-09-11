@@ -20,6 +20,8 @@ public class Keeper {
 
     private List<ActionBotInterface> listActionBot;
 
+    private SavedKeeperInfo savedKeeperInfo = new SavedKeeperInfo();
+
     public void startKeeper( Context context){
         if (listActionBot.size()==0) return;
         ActionBotInterface actionFirst = listActionBot.get(0);
@@ -48,5 +50,14 @@ public class Keeper {
 
     public void setListActionBot(List<ActionBotInterface> listActionBot) {
         this.listActionBot = listActionBot;
+    }
+
+    public SavedKeeperInfo getSavedKeeperInfo() {
+        return savedKeeperInfo;
+    }
+
+    public void setSavedKeeperInfo(SavedKeeperInfo savedKeeperInfo) {
+        System.out.println("Saved keeper");
+        this.savedKeeperInfo = savedKeeperInfo;
     }
 }

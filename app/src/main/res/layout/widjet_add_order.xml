@@ -27,11 +27,18 @@
         android:inputType="numberDecimal"
         android:windowSoftInputMode="stateHidden" />
 
-    <Button
-        android:id="@+id/buttonmaxVal"
+    <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="@string/maxVal" />
+        android:orientation="vertical">
+
+        <Button
+            android:id="@+id/buttonmaxVal"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="@string/maxVal" />
+
+    </LinearLayout>
 
     <LinearLayout
         android:id="@+id/layAdInfo"
