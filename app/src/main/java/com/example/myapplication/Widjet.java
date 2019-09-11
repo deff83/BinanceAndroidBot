@@ -23,6 +23,8 @@ import android.view.WindowManager;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
+import android.widget.CheckBox;
+import android.widget.Checkable;
 import android.widget.EditText;
 import android.widget.LinearLayout;
 import android.widget.Spinner;
@@ -31,6 +33,7 @@ import android.widget.Toast;
 
 import androidx.recyclerview.widget.RecyclerView;
 
+import com.binance.api.client.BinanceApiClientFactory;
 import com.binance.api.client.domain.OrderSide;
 import com.binance.api.client.domain.account.Account;
 import com.binance.api.client.domain.account.AssetBalance;
@@ -87,14 +90,17 @@ public class Widjet extends Service implements ModelObs {
         //settings UP
         pref = getSharedPreferences("SETTINGSUP", Context.MODE_PRIVATE);
         editor = pref.edit();
-
+        ////////////////////////////////начальные настройки////////////////////////////////////////
         String tekPara = pref.getString("tekPara", "COCOSUSDT");
         BinanceState.getInstance().setTekPara(tekPara);
 
         int tekCount= pref.getInt("tekCount", 20);
         BinanceState.getInstance().setTekCount(tekCount);
 
-
+        //is Balance
+        boolean isBalance = pref.getBoolean("isBalance", true);
+        BinanceState.getInstance().setMyBalance(isBalance);
+        ///////////////////////////////////////////////////////////////////////////////////////
         //Toast.makeText(this, , Toast.LENGTH_SHORT).show();
 
         //window trade
@@ -270,6 +276,22 @@ public class Widjet extends Service implements ModelObs {
                         }
                     });
 
+                    CheckBox check_myBalance = new CheckBox(Widjet.this);
+                    check_myBalance.setChecked(BinanceState.getInstance().isMyBalance());
+
+                    check_myBalance.setOnClickListener(new View.OnClickListener() {
+                        @Override
+                        public void onClick(View view) {
+                            boolean checked = check_myBalance.isChecked();
+                            System.out.println("isBalance "+checked);
+                            editor.putBoolean("isBalance", checked);
+                            editor.commit();
+                            BinanceState.getInstance().setMyBalance(checked);
+                            balanceLay.removeAllViews();
+                        }
+                    });
+
+                    settingLay.addView(check_myBalance);
 
 
 
@@ -339,6 +361,7 @@ public class Widjet extends Service implements ModelObs {
         Account account = binanceState.getAccount();
         List<Order> listOrder = binanceState.getMyOrdersTek();
         List<Keeper> listBot = Performer.getInstance().getListKeepers();
+        List<TickerPrice> tikPrice = binanceState.getTikPrice();
 
         switch(argSt){
             case -1:
@@ -357,6 +380,9 @@ public class Widjet extends Service implements ModelObs {
             case 4:
                 setListBot(listBot);
                 break;
+            case 5:
+                setTickAllPricez(tikPrice);
+                break;
 
         }
 
@@ -364,6 +390,9 @@ public class Widjet extends Service implements ModelObs {
 
 
         return super.onStartCommand(intent, flags, startId);
+    }
+    public void setTickAllPricez(List<TickerPrice> tikPrice){
+        //все цены
     }
 
     public void setMyOrder(List<Order> listOrder){
@@ -439,7 +468,7 @@ public class Widjet extends Service implements ModelObs {
 
     public void setAccountB(Account acc){
         if (acc != null) {
-            System.out.println(acc.getBalances());
+            System.out.println("Account balance: "+acc.getBalances());
             List<AssetBalance> listbalance = acc.getBalances();
             BinanceState binanceState = BinanceState.getInstance();
             String balanc = acc.toString();
@@ -477,6 +506,13 @@ public class Widjet extends Service implements ModelObs {
     public void getPricecList(List<OrderBookEntry> priceSell, List<OrderBookEntry> priceBuy){
         //System.out.println("getPrice");
         widgetScrLay.removeAllViews();
+
+        //текущая пара
+        Button grav = (Button) tr.findViewById(R.id.buttonGrav);
+        if (BinanceState.getInstance().getTekPara()!= null) {
+            grav.setText(BinanceState.getInstance().getTekPara());
+            grav.setTextSize(10);
+        }
         double maxPriceSell = 0;
         double maxPriceBuy = 0;
         for (int i = priceSell.size()-1; i!=-1; i--){
@@ -488,6 +524,10 @@ public class Widjet extends Service implements ModelObs {
             if (maxPriceBuy<val) maxPriceBuy = val;
         }
         List<Order> listMyOrdes = BinanceState.getInstance().getMyOrdersTek();
+        //множитель
+        double mnozhitel = 1.0;
+        System.out.println("mnozhitel: "+Pokazatel.getInstance().getOtPara(BinanceState.getInstance().getTekPara()));
+        mnozhitel = Pokazatel.getInstance().getMnozitel(BinanceState.getInstance().getTekPara());
 
         for (int i = priceSell.size()-1; i!=-1; i--){
             OrderBookEntry sellorderbook = priceSell.get(i);
@@ -527,7 +567,9 @@ public class Widjet extends Service implements ModelObs {
             butttestVal.setBackgroundColor(Color.rgb((int) (val/maxPriceSell*255),100,100));
             butttestVal.setTextSize(12.0f);
             butttestVal.setPadding(5, 0, 5, 0);
-            butttestVal.setText(Math.round(val*priceTe)*100/100+"");
+
+
+            butttestVal.setText(Math.round(val*priceTe*mnozhitel)*100/100+"");
             butttestVal.setMaxHeight(20);
             ll.addView(butttestVal);
 
@@ -568,7 +610,7 @@ public class Widjet extends Service implements ModelObs {
             butttestVal.setBackgroundColor(Color.rgb(100,(int) (val/maxPriceBuy*255),100));
             butttestVal.setTextSize(12.0f);
             butttestVal.setPadding(5, 0, 5, 0);
-            butttestVal.setText(Math.round(val*priceTe*100)/100+"");
+            butttestVal.setText(Math.round(val*priceTe*mnozhitel*100)/100+"");
             butttestVal.setMaxHeight(20);
             ll.addView(butttestVal);
 
@@ -732,7 +774,7 @@ public class Widjet extends Service implements ModelObs {
                         editTextVal.setText(Math.floor(75/Double.parseDouble(sellorderbook.getPrice()))+"");
                         break;
                     case R.id.goOrderAddLimit:
-                        ActionBot_LimitOrder orderAction2 = new ActionBot_LimitOrder(newAddOrder);
+                        ActionBot_LimitOrder orderAction2 = new ActionBot_LimitOrder(newAddOrder, 0);
                         Keeper.getInstance().addAction(orderAction2, Widjet.this);
                         try{wm.removeView(trAddOrder);}catch(Exception e){};
                         break;
@@ -782,6 +824,35 @@ public class Widjet extends Service implements ModelObs {
             linlayPerestanov.addView(spinner);
             linlayPerestanov.addView(perestanovButton);
             llOrderInfo.addView(linlayPerestanov);
+            LinearLayout linlayPerestanovSpec = new LinearLayout(this);
+            linlayPerestanovSpec.setOrientation(LinearLayout.HORIZONTAL);
+            //поставить с лучшей ценой
+            Button perepostLuche = new Button(Widjet.this);
+            perepostLuche.setText(R.string.postFollow);
+            perepostLuche.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View view) {
+                    int itemPosition = spinner.getSelectedItemPosition();
+                    new BotFunction(Widjet.this).perestanovOrderLuch(orders.get(itemPosition), sellorderbook);
+                    try{wm.removeView(trAddOrder);}catch(Exception e){};
+                }
+            });
+            //поставить с лучшей ценой перед всеми
+            Button perepostPeredVsemi = new Button(Widjet.this);
+            perepostPeredVsemi.setText(R.string.postNachalo);
+            perepostPeredVsemi.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View view) {
+                    int itemPosition = spinner.getSelectedItemPosition();
+                    new BotFunction(Widjet.this).perestanovOrderPered(orders.get(itemPosition));
+                    try{wm.removeView(trAddOrder);}catch(Exception e){};
+                }
+            });
+
+            linlayPerestanovSpec.addView(perepostLuche);
+            linlayPerestanovSpec.addView(perepostPeredVsemi);
+            llOrderInfo.addView(linlayPerestanovSpec);
+
         }
 
 
@@ -835,6 +906,9 @@ public class Widjet extends Service implements ModelObs {
                 this.startService(intet);
                 break;
             case 4:     //listBot
+                this.startService(intet);
+                break;
+            case 5:     //tickPricezAll getAllPrices
                 this.startService(intet);
                 break;
 

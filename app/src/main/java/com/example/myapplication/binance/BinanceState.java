@@ -2,6 +2,7 @@ package com.example.myapplication.binance;
 
 import com.binance.api.client.domain.account.Account;
 import com.binance.api.client.domain.account.Order;
+import com.binance.api.client.domain.general.ExchangeInfo;
 import com.binance.api.client.domain.market.OrderBookEntry;
 import com.binance.api.client.domain.market.TickerPrice;
 
@@ -21,6 +22,25 @@ public class BinanceState {
     private List<OrderBookEntry> priceSell = new ArrayList<>();
     private List<OrderBookEntry> priceBuy = new ArrayList<>();
     private List<TickerPrice> tikPrice = new ArrayList<>();
+
+    private ExchangeInfo exchangeInfo = null;
+    private  boolean isMyBalance = true;
+
+    public ExchangeInfo getExchangeInfo() {
+        return exchangeInfo;
+    }
+
+    public void setExchangeInfo(ExchangeInfo exchangeInfo) {
+        this.exchangeInfo = exchangeInfo;
+    }
+
+    public boolean isMyBalance() {
+        return isMyBalance;
+    }
+
+    public void setMyBalance(boolean myBalance) {
+        isMyBalance = myBalance;
+    }
 
     public List<Order> getMyOrdersTek() {
         return myOrdersTek;

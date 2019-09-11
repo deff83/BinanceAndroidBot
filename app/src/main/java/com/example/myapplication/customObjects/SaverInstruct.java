@@ -171,7 +171,7 @@ public class SaverInstruct {
             if (strName.equals("LimitOrder")){
                 JsonObject jsonaddOrder = jsonobgItem.get("addorder").getAsJsonObject();
                 AddOrder ordern = getaddOrderFromJson(jsonaddOrder);
-                ActionBot_LimitOrder actiCancel = new ActionBot_LimitOrder(ordern);
+                ActionBot_LimitOrder actiCancel = new ActionBot_LimitOrder(ordern, 0);
                 boolean didaction = jsonobgItem.get("didAction").getAsBoolean();
                 actiCancel.setDidAction(didaction);
                 actionBotInterfaceList.add(actiCancel);

@@ -74,7 +74,7 @@ public class ExampleUnitTest {
         try {
 
             ExchangeInfo exchangeInfo = client.getExchangeInfo();
-            SymbolInfo symbolInfo = exchangeInfo.getSymbolInfo("WINUSDC");
+            SymbolInfo symbolInfo = exchangeInfo.getSymbolInfo("BCPTBTC");
             List<SymbolFilter> listFilters = symbolInfo.getFilters();
             for(SymbolFilter symbolFilter: listFilters){
                 System.out.println(symbolFilter.getFilterType());
@@ -107,7 +107,7 @@ public class ExampleUnitTest {
         apiBinance = APIBinance.getInstance();
         client = apiBinance.getClient();
 
-        AddOrder addorder = new AddOrder(2.83E-4, 290000, "SELL", "WINUSDC", "0.000283000");
+        AddOrder addorder = new AddOrder(2.83E-4, 290000, "SELL", "WINUSDC");
         System.out.println(String.format(Locale.ROOT,"%.8f", addorder.getPrice()));
         addorder.setPriceStr(String.format(Locale.ROOT,"%.8f", addorder.getPrice()));
         NewOrder newOrderAdd = NewOrder.limitSell(addorder.getPara(), TimeInForce.GTC, addorder.getValue()+"", addorder.getPriceStr()+"");

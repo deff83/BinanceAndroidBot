@@ -1,11 +1,22 @@
 package com.example.myapplication.bot;
 
 import com.binance.api.client.BinanceApiRestClient;
+import com.binance.api.client.domain.OrderSide;
 import com.binance.api.client.domain.TimeInForce;
 import com.binance.api.client.domain.account.NewOrder;
 import com.binance.api.client.domain.account.NewOrderResponse;
+import com.binance.api.client.domain.general.ExchangeInfo;
+import com.binance.api.client.domain.general.FilterType;
+import com.binance.api.client.domain.general.SymbolFilter;
+import com.binance.api.client.domain.general.SymbolInfo;
+import com.binance.api.client.domain.market.OrderBook;
+import com.binance.api.client.domain.market.OrderBookEntry;
 import com.example.myapplication.ObservableSave;
 import com.example.myapplication.binance.APIBinance;
+import com.example.myapplication.binance.BinanceState;
+
+import java.util.List;
+import java.util.Locale;
 
 public class ActionBot_LimitOrder implements ActionBotInterface {
     private AddOrder addorder;
@@ -14,12 +25,14 @@ public class ActionBot_LimitOrder implements ActionBotInterface {
     private boolean didAction = false;
     private BinanceApiRestClient client;
     private APIBinance apiBinance;
+    private int typePostanov = 0;
 
 
-    public ActionBot_LimitOrder(AddOrder addorder) {
+    public ActionBot_LimitOrder(AddOrder addorder, int typePostanov) {
         this.addorder = addorder;
         apiBinance = APIBinance.getInstance();
         client = apiBinance.getClient();
+        this.typePostanov = typePostanov;
     }
 
     @Override
@@ -29,6 +42,48 @@ public class ActionBot_LimitOrder implements ActionBotInterface {
 
     @Override
     public void doAction() {
+
+        switch (typePostanov){
+            case 0:
+                break;
+            case 1: //взять цену самую первую в списке
+                SavedKeeperInfo savedKeeperInfo = Keeper.getInstance().getSavedKeeperInfo();
+                OrderBook orderBook = savedKeeperInfo.getOrderBook();
+
+                List<OrderBookEntry> listBookEntry = orderBook.getAsks();
+
+                if (addorder.getTypeOrder().equals("BUY")){
+                    listBookEntry = orderBook.getBids();
+                    //количество токенов на покупку пересчитать
+                  }
+
+                String luchCen = listBookEntry.get(0).getPrice();
+                ExchangeInfo exchangeInfo = BinanceState.getInstance().getExchangeInfo();
+                if (exchangeInfo == null) return;
+                // Obtain symbol information
+                SymbolInfo symbolInfo = exchangeInfo.getSymbolInfo(addorder.getPara());
+                SymbolFilter pricefilter = symbolInfo.getSymbolFilter(FilterType.PRICE_FILTER);
+                double tick = Double.parseDouble(pricefilter.getTickSize());
+                String newPrice = String.format(Locale.ROOT,"%.8f", Double.parseDouble(luchCen)+tick);
+                if (addorder.getTypeOrder().equals("SELL")){
+                    newPrice = String.format(Locale.ROOT,"%.8f", Double.parseDouble(luchCen)-tick);
+                }
+
+
+
+                System.out.println("teeest:"+addorder.getTypeOrder());
+                if (addorder.getTypeOrder().equals("BUY")) {
+                    addorder.setValue(Math.floor(addorder.getValue() * addorder.getPrice() / Double.parseDouble(newPrice))-1);
+
+                    System.out.println("teeest:"+addorder.getValue()+" "+addorder.getPrice()+" "+Double.parseDouble(newPrice));
+                }
+
+                addorder.setPrice(Double.parseDouble(newPrice));
+                addorder.setPriceStr(newPrice);
+
+                break;
+        }
+
         System.out.println("adddd "+addorder.getValue()+" "+addorder.getPrice()+" "+addorder.getPriceStr()+"");
         NewOrder newOrderAdd = NewOrder.limitSell(addorder.getPara(), TimeInForce.GTC, addorder.getValue()+"", addorder.getPriceStr()+"");
         if(addorder.getTypeOrder().equals("BUY")) newOrderAdd = NewOrder.limitBuy(addorder.getPara(), TimeInForce.GTC, addorder.getValue()+"", addorder.getPriceStr()+""); ;
