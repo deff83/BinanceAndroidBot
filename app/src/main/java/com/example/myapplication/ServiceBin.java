@@ -185,7 +185,7 @@ public class ServiceBin extends Service {
 
         executor.scheduleWithFixedDelay(runn, 0, 5, TimeUnit.SECONDS);
         executor2.scheduleWithFixedDelay(runnAcc, 0, 50, TimeUnit.SECONDS);
-        executor3.scheduleWithFixedDelay(runnTikPr, 0, 50, TimeUnit.SECONDS);
+        executor3.scheduleWithFixedDelay(runnTikPr, 0, 61, TimeUnit.SECONDS);
         executor4.scheduleWithFixedDelay(runnMyOrder, 0, 10, TimeUnit.SECONDS);
         executor5.scheduleWithFixedDelay(runnListBot, 0, 5, TimeUnit.SECONDS);
         executor6.scheduleWithFixedDelay(runnPerfomListBot, 0, 5, TimeUnit.SECONDS);

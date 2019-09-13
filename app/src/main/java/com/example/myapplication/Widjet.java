@@ -52,7 +52,9 @@ import com.example.myapplication.bot.BotFunction;
 import com.example.myapplication.bot.Keeper;
 import com.example.myapplication.bot.Performer;
 import com.example.myapplication.customObjects.MyWidgetButton;
+import com.example.myapplication.customObjects.PerCentPrices;
 import com.example.myapplication.customObjects.Preobr;
+import com.example.myapplication.customObjects.SavedAllPrice;
 import com.example.myapplication.customObjects.SaverInstruct;
 
 import java.util.ArrayList;
@@ -64,10 +66,10 @@ import java.util.List;
 public class Widjet extends Service implements ModelObs {
     SharedPreferences pref;
     SharedPreferences.Editor editor = null;
-
+    boolean boolPercentPokz = true;
     WindowManager wm;
-    WindowManager.LayoutParams myParams, myParamsBalance, changemyOrder, botListwm, addmyOrder, dopFunction, myOrderList;
-    LinearLayout tr, trBalance, trChangeOrder, trWidgetbot, trAddOrder, trWidgetDopFunctio, trMyOrder;
+    WindowManager.LayoutParams myParams, myParamsBalance, changemyOrder, botListwm, addmyOrder, dopFunction, myOrderList, izmPriceListwm;
+    LinearLayout tr, trBalance, trChangeOrder, trWidgetbot, trAddOrder, trWidgetDopFunctio, trMyOrder, trIzmPrice;
     LinearLayout widgetScrLay, settingLay, balanceLay, myOrderLay, layBotList;
     View.OnClickListener myOrderclickListener, onClickListBook;
     int argSt = 1;
@@ -147,6 +149,13 @@ public class Widjet extends Service implements ModelObs {
                 WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE,
                 PixelFormat.TRANSLUCENT);
 
+        izmPriceListwm = new WindowManager.LayoutParams(
+                WindowManager.LayoutParams.WRAP_CONTENT,
+                WindowManager.LayoutParams.WRAP_CONTENT,
+                WindowManager.LayoutParams.TYPE_PHONE,
+                WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE,
+                PixelFormat.TRANSLUCENT);
+
         myOrderList = new WindowManager.LayoutParams(
                 WindowManager.LayoutParams.WRAP_CONTENT,
                 WindowManager.LayoutParams.WRAP_CONTENT,
@@ -157,6 +166,10 @@ public class Widjet extends Service implements ModelObs {
         myOrderList.gravity = Gravity.RIGHT | Gravity.TOP;
 
         botListwm.gravity = Gravity.LEFT | Gravity.BOTTOM;
+
+        izmPriceListwm.gravity = Gravity.BOTTOM;
+
+        izmPriceListwm.x = 120;
 
         changemyOrder.gravity = Gravity.CENTER;
 
@@ -179,6 +192,8 @@ public class Widjet extends Service implements ModelObs {
         trWidgetDopFunctio= (LinearLayout) inflater6.inflate(R.layout.widget_dop_function, null);
         LayoutInflater inflater7 = LayoutInflater.from(this);
         trMyOrder= (LinearLayout) inflater7.inflate(R.layout.layout_my_orders, null);
+        LayoutInflater inflater8 = LayoutInflater.from(this);
+        trIzmPrice = (LinearLayout) inflater8.inflate(R.layout.layout_izm_pricez, null);
 
 
 
@@ -306,6 +321,7 @@ public class Widjet extends Service implements ModelObs {
         wm.addView(trWidgetbot, botListwm);
         wm.addView(trMyOrder, myOrderList);
         wm.addView(tr, myParams);
+        wm.addView(trIzmPrice, izmPriceListwm);
 
         myOrderclickListener = new View.OnClickListener() {
             @Override
@@ -347,7 +363,7 @@ public class Widjet extends Service implements ModelObs {
 
         //добавим в слушателя в список
         ObservableSave.getObs().addModel(this);
-
+        ObservableSave.getObs().addModel(SavedAllPrice.getInstance());
 
 
     }
@@ -362,6 +378,8 @@ public class Widjet extends Service implements ModelObs {
         List<Order> listOrder = binanceState.getMyOrdersTek();
         List<Keeper> listBot = Performer.getInstance().getListKeepers();
         List<TickerPrice> tikPrice = binanceState.getTikPrice();
+
+        List<PerCentPrices> listpercIzm = SavedAllPrice.getInstance().getListpercIzm();
 
         switch(argSt){
             case -1:
@@ -383,6 +401,9 @@ public class Widjet extends Service implements ModelObs {
             case 5:
                 setTickAllPricez(tikPrice);
                 break;
+            case 7:
+                setIzmPricez(listpercIzm);
+                break;
 
         }
 
@@ -393,6 +414,105 @@ public class Widjet extends Service implements ModelObs {
     }
     public void setTickAllPricez(List<TickerPrice> tikPrice){
         //все цены
+    }
+
+
+    public void setIzmPricez(List<PerCentPrices> listpercIz) {
+        LinearLayout izmLay = (LinearLayout) trIzmPrice.findViewById(R.id.layoutIzmPrice);
+        izmLay.removeAllViews();
+        if (listpercIz.size() < 1) {
+            MyWidgetButton butttest1 = new MyWidgetButton(this);
+            butttest1.setTextSize(12.0f);
+            butttest1.setBackgroundColor(Color.BLACK);
+            butttest1.setPadding(5, 0, 5, 0);
+            butttest1.setMaxHeight(20);
+            butttest1.setText("none");
+
+            izmLay.addView(butttest1);
+            return;
+        }
+
+        if (boolPercentPokz) {
+            for (int i = 0; i < listpercIz.size(); i++) {
+                PerCentPrices perCentPrices = listpercIz.get(i);
+                LinearLayout linllm = new LinearLayout(Widjet.this);
+                linllm.setOrientation(LinearLayout.HORIZONTAL);
+
+                MyWidgetButton butttest1 = new MyWidgetButton(this);
+                butttest1.setTextSize(12.0f);
+                butttest1.setBackgroundColor(Color.argb(90, 0, 0, 0));
+
+                if (perCentPrices.getPercent() > 0)
+                    butttest1.setTextColor(Color.rgb(100, 255, 100));
+                if (perCentPrices.getPercent() < 0)
+                    butttest1.setTextColor(Color.rgb(255, 100, 100));
+
+                butttest1.setPadding(5, 0, 5, 0);
+                butttest1.setMaxHeight(20);
+                butttest1.setWidth(80);
+                butttest1.setText(perCentPrices.getName() + "");
+
+                butttest1.setOnClickListener(new View.OnClickListener() {
+                    @Override
+                    public void onClick(View view) {
+                        izmLay.removeAllViews();
+
+                        boolPercentPokz = false;
+                        ObservableSave.getObs().update(7);
+                    }
+                });
+
+
+                MyWidgetButton butttest2 = new MyWidgetButton(this);
+                butttest2.setTextSize(12.0f);
+                butttest2.setBackgroundColor(Color.argb(90, 0, 0, 0));
+
+                if (perCentPrices.getPercent() > 0)
+                    butttest2.setTextColor(Color.rgb(100, 255, 100));
+                if (perCentPrices.getPercent() < 0)
+                    butttest2.setTextColor(Color.rgb(255, 100, 100));
+
+                butttest2.setPadding(5, 0, 5, 0);
+                butttest2.setMaxHeight(20);
+                butttest2.setWidth(70);
+                butttest2.setText(perCentPrices.getPercent() + "%");
+                MyWidgetButton butttest3 = new MyWidgetButton(this);
+                butttest3.setTextSize(12.0f);
+                butttest3.setBackgroundColor(Color.argb(90, 0, 0, 0));
+
+                if (perCentPrices.getPercent() > 0)
+                    butttest3.setTextColor(Color.rgb(100, 255, 100));
+                if (perCentPrices.getPercent() < 0)
+                    butttest3.setTextColor(Color.rgb(255, 100, 100));
+
+                butttest3.setPadding(5, 0, 5, 0);
+                butttest3.setMaxHeight(20);
+                butttest3.setText(perCentPrices.getPeriod() + "");
+                butttest3.setWidth(40);
+                linllm.addView(butttest1);
+                linllm.addView(butttest2);
+                linllm.addView(butttest3);
+                System.out.println("izmLay");
+                izmLay.addView(linllm);
+            }
+        }else{
+            MyWidgetButton butttest1 = new MyWidgetButton(this);
+            butttest1.setTextSize(12.0f);
+            butttest1.setBackgroundColor(Color.BLACK);
+            butttest1.setPadding(5, 0, 5, 0);
+            butttest1.setMaxHeight(20);
+            butttest1.setText("none");
+            butttest1.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View view) {
+                    boolPercentPokz = true;
+                    ObservableSave.getObs().update(7);
+                }
+            });
+
+            izmLay.addView(butttest1);
+            return;
+        }
     }
 
     public void setMyOrder(List<Order> listOrder){
@@ -911,7 +1031,9 @@ public class Widjet extends Service implements ModelObs {
             case 5:     //tickPricezAll getAllPrices
                 this.startService(intet);
                 break;
-
+            case 7:
+                this.startService(intet);
+                break;
         }
     }
 }

@@ -152,6 +152,15 @@ public class BotFunction {
         return colPer;
     }
 
+    public static Double getTick(String para){
+        ExchangeInfo exchangeInfo = BinanceState.getInstance().getExchangeInfo();
+        if (exchangeInfo == null) return 0.0;
+        // Obtain symbol information
+        SymbolInfo symbolInfo = exchangeInfo.getSymbolInfo(para);
+        SymbolFilter pricefilter = symbolInfo.getSymbolFilter(FilterType.PRICE_FILTER);
+        double tick = Double.parseDouble(pricefilter.getTickSize());
+        return tick;
+    }
     public void setColPer(int colPer) {
         this.colPer = colPer;
     }
