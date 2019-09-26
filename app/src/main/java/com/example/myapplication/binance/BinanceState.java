@@ -3,8 +3,11 @@ package com.example.myapplication.binance;
 import com.binance.api.client.domain.account.Account;
 import com.binance.api.client.domain.account.Order;
 import com.binance.api.client.domain.general.ExchangeInfo;
+import com.binance.api.client.domain.market.Candlestick;
+import com.binance.api.client.domain.market.CandlestickInterval;
 import com.binance.api.client.domain.market.OrderBookEntry;
 import com.binance.api.client.domain.market.TickerPrice;
+import com.example.myapplication.bot.MaxVol;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -22,9 +25,74 @@ public class BinanceState {
     private List<OrderBookEntry> priceSell = new ArrayList<>();
     private List<OrderBookEntry> priceBuy = new ArrayList<>();
     private List<TickerPrice> tikPrice = new ArrayList<>();
+    private List<Candlestick> candlesticks = new ArrayList<>();
+    private MaxVol maxVol = new MaxVol();
+    private CandlestickInterval intervalCandle = CandlestickInterval.FIVE_MINUTES;
 
     private ExchangeInfo exchangeInfo = null;
     private  boolean isMyBalance = true;
+    private boolean isCandles = false;
+
+    public boolean isCandles() {    return isCandles;    }
+
+    public void setCandles(boolean candles) {     isCandles = candles;    }
+
+    public Long getLongInterval(){
+        Long retLong = 0l;
+        switch (intervalCandle){
+            case FIVE_MINUTES:
+                retLong = 1000*60*5l;
+                break;
+            case DAILY:
+                retLong = 1000*60*60*24l;
+                break;
+            case HOURLY:
+                retLong = 1000*60*60l;
+                break;
+            case WEEKLY:
+                retLong = 1000*60*60*24*7l;
+                break;
+            case MONTHLY://месяц
+                retLong = 1000*60*60*24*30l;
+                break;
+            case ONE_MINUTE:
+                retLong = 1000*60*1l;
+                break;
+            case SIX_HOURLY:
+                retLong = 1000*60*60*6l;
+                break;
+            case FOUR_HOURLY:
+                retLong = 1000*60*60*4l;
+                break;
+            case HALF_HOURLY:
+                retLong = 1000*60*30l;
+                break;
+            case THREE_DAILY:
+                retLong = 1000*60*60*24*3l;
+                break;
+            case EIGHT_HOURLY:
+                retLong = 1000*60*60*8l;
+                break;
+            case THREE_MINUTES:
+                retLong = 1000*60*3l;
+                break;
+            case TWELVE_HOURLY:
+                retLong = 1000*60*60*12l;
+                break;
+            case FIFTEEN_MINUTES:
+                retLong = 1000*60*15l;
+                break;
+        }
+        return retLong;
+    }
+
+    public CandlestickInterval getIntervalCandle() {  return intervalCandle;   }
+
+    public void setIntervalCandle(CandlestickInterval intervalCandle) {   this.intervalCandle = intervalCandle;  }
+
+    public MaxVol getMaxVol() { return maxVol; }
+
+    public void setMaxVol(MaxVol maxVol) {    this.maxVol = maxVol; }
 
     public ExchangeInfo getExchangeInfo() {
         return exchangeInfo;
@@ -114,6 +182,14 @@ public class BinanceState {
 
     public void setPriceBuy(List<OrderBookEntry> priceBuy) {
         this.priceBuy = priceBuy;
+    }
+
+    public List<Candlestick> getCandlesticks() {
+        return candlesticks;
+    }
+
+    public void setCandlesticks(List<Candlestick> candlesticks) {
+        this.candlesticks = candlesticks;
     }
 
     public Order getOrderById(int id){

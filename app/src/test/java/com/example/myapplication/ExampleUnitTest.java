@@ -13,17 +13,25 @@ import com.binance.api.client.domain.general.FilterType;
 import com.binance.api.client.domain.general.SymbolFilter;
 import com.binance.api.client.domain.general.SymbolInfo;
 import com.binance.api.client.domain.market.AggTrade;
+import com.binance.api.client.domain.market.Candlestick;
+import com.binance.api.client.domain.market.CandlestickInterval;
 import com.binance.api.client.domain.market.OrderBook;
 import com.binance.api.client.domain.market.OrderBookEntry;
 import com.binance.api.client.domain.market.TickerStatistics;
 import com.example.myapplication.binance.APIBinance;
 import com.example.myapplication.bot.ActionBot_CancelOrder;
 import com.example.myapplication.bot.AddOrder;
+import com.example.myapplication.bot.BotFunction;
 
 import org.junit.Test;
 
+import java.util.Date;
 import java.util.List;
 import java.util.Locale;
+
+import okhttp3.OkHttpClient;
+import okhttp3.Request;
+import okhttp3.Response;
 
 import static org.junit.Assert.*;
 
@@ -125,4 +133,50 @@ public class ExampleUnitTest {
             //errorActiom("newOrderResponse LIMIT Error:"+e.getMessage());
         }
     }
+
+    @Test
+    public void getCandle(){
+        apiBinance = APIBinance.getInstance();
+        client = apiBinance.getClient();
+        //List<Candlestick> candlesticks = client.getCandlestickBars("WPRBTC", CandlestickInterval.WEEKLY);
+        List<Candlestick> candlesticks = null;
+
+
+        System.out.println(candlesticks);
+    }
+
+    @Test
+    public void testHMacSha256(){
+        apiBinance = APIBinance.getInstance();
+
+        try{
+            System.out.println(apiBinance.gettHmacSHA256Pri(""));
+        }catch (Exception e){
+            e.printStackTrace();
+        }
+
+    }
+
+    @Test
+    public void testGetStatuse(){
+        try{
+            apiBinance = APIBinance.getInstance();
+            OkHttpClient clientOkkHttp = new OkHttpClient();
+            long timestamp = new Date().getTime();
+            timestamp = apiBinance.getClient().getServerTime();
+            String param_for_sign = "timestamp="+timestamp;
+            String signature = apiBinance.gettHmacSHA256Pri(param_for_sign);
+            System.out.println(signature);
+            String params = "?timestamp="+timestamp+"&signature="+signature;
+            Request request = new Request.Builder()
+                    .addHeader("X-MBX-APIKEY", APIBinance.getInstance().getAPI_KEY())
+                    .url("https://api.binance.com/wapi/v3/apiTradingStatus.html"+params)
+                    .build();
+            try(Response response = clientOkkHttp.newCall(request).execute()){
+                System.out.println(response.body().string());
+            }
+        }catch (Exception e){e.printStackTrace();}
+
+    }
+
 }

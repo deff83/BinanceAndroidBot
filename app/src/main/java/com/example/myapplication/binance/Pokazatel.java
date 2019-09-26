@@ -1,5 +1,6 @@
 package com.example.myapplication.binance;
 
+import com.binance.api.client.domain.market.Candlestick;
 import com.binance.api.client.domain.market.TickerPrice;
 
 import java.util.List;
@@ -54,6 +55,12 @@ public class Pokazatel {
         }
         return text3;
     }
+
+    public String getFromPara(String para){
+        String otPara = getOtPara(para);
+        return para.substring(0, para.length() - otPara.length());
+    }
+
     public double getMnozitel(String para){
         double mnozhitel = 1.0;
         if (getOtPara(para).equals("USDT")) {
@@ -71,5 +78,24 @@ public class Pokazatel {
         return mnozhitel;
     }
 
+    public MaxRectCandle getMaxPrice(List<Candlestick> listCandle, Long nachTime, Long endTime){
+        double maxPri = 0;
+        double minPri = 0;
+        for (Candlestick candl: listCandle){
+            double priHight =  Double.parseDouble(candl.getHigh());
+            double priLow =  Double.parseDouble(candl.getLow());
+            long timeOpen = candl.getOpenTime();
+            long timeClose = candl.getCloseTime();
+
+            if (timeOpen>=nachTime && timeClose<=endTime) {
+                if (maxPri==0) maxPri = priHight;
+                if (minPri==0) minPri = priLow;
+                if (priHight > maxPri) maxPri = priHight;
+                if (priLow < minPri) minPri = priLow;
+            }
+
+        }
+        return new MaxRectCandle(maxPri, minPri);
+    };
 
 }

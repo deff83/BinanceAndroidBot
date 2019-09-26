@@ -4,6 +4,7 @@ import android.app.Service;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.LinearGradient;
 import android.graphics.PixelFormat;
@@ -27,6 +28,7 @@ import android.widget.CheckBox;
 import android.widget.Checkable;
 import android.widget.EditText;
 import android.widget.LinearLayout;
+import android.widget.RelativeLayout;
 import android.widget.Spinner;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -38,6 +40,7 @@ import com.binance.api.client.domain.OrderSide;
 import com.binance.api.client.domain.account.Account;
 import com.binance.api.client.domain.account.AssetBalance;
 import com.binance.api.client.domain.account.Order;
+import com.binance.api.client.domain.market.Candlestick;
 import com.binance.api.client.domain.market.OrderBook;
 import com.binance.api.client.domain.market.OrderBookEntry;
 import com.binance.api.client.domain.market.TickerPrice;
@@ -50,7 +53,12 @@ import com.example.myapplication.bot.ActionBot_LimitOrder;
 import com.example.myapplication.bot.AddOrder;
 import com.example.myapplication.bot.BotFunction;
 import com.example.myapplication.bot.Keeper;
+import com.example.myapplication.bot.MaxVol;
 import com.example.myapplication.bot.Performer;
+import com.example.myapplication.botOpiration.BotOpiration;
+import com.example.myapplication.botOpiration.OpirationOrder;
+import com.example.myapplication.botOpiration.PerestanovOpiration;
+import com.example.myapplication.customObjects.CandleView;
 import com.example.myapplication.customObjects.MyWidgetButton;
 import com.example.myapplication.customObjects.PerCentPrices;
 import com.example.myapplication.customObjects.Preobr;
@@ -68,14 +76,15 @@ public class Widjet extends Service implements ModelObs {
     SharedPreferences.Editor editor = null;
     boolean boolPercentPokz = true;
     WindowManager wm;
-    WindowManager.LayoutParams myParams, myParamsBalance, changemyOrder, botListwm, addmyOrder, dopFunction, myOrderList, izmPriceListwm;
-    LinearLayout tr, trBalance, trChangeOrder, trWidgetbot, trAddOrder, trWidgetDopFunctio, trMyOrder, trIzmPrice;
+    WindowManager.LayoutParams myParams, myParamsBalance, changemyOrder, botListwm, candleListwm,addmyOrder, dopFunction, myOrderList, izmPriceListwm, mySetting;
+    LinearLayout tr, trBalance, trChangeOrder, trWidgetbot, trAddOrder, trWidgetDopFunctio, trMyOrder, trIzmPrice, trSetting, trCandle;
     LinearLayout widgetScrLay, settingLay, balanceLay, myOrderLay, layBotList;
     View.OnClickListener myOrderclickListener, onClickListBook;
     int argSt = 1;
     Comparator balanceComparator = new SortAsset();
     boolean settingbool = true;
     Handler handler;
+    Spinner spinner;
     public Widjet() {
     }
 
@@ -134,6 +143,13 @@ public class Widjet extends Service implements ModelObs {
                 WindowManager.LayoutParams.FLAG_LAYOUT_NO_LIMITS,
                 PixelFormat.TRANSLUCENT);
 
+        mySetting = new WindowManager.LayoutParams(
+                WindowManager.LayoutParams.WRAP_CONTENT,
+                WindowManager.LayoutParams.WRAP_CONTENT,
+                WindowManager.LayoutParams.TYPE_PHONE,
+                WindowManager.LayoutParams.FLAG_LAYOUT_IN_OVERSCAN,
+                PixelFormat.TRANSLUCENT);
+
         dopFunction = new WindowManager.LayoutParams(
                 WindowManager.LayoutParams.WRAP_CONTENT,
                 WindowManager.LayoutParams.WRAP_CONTENT,
@@ -143,6 +159,12 @@ public class Widjet extends Service implements ModelObs {
 
 
         botListwm = new WindowManager.LayoutParams(
+                WindowManager.LayoutParams.WRAP_CONTENT,
+                WindowManager.LayoutParams.WRAP_CONTENT,
+                WindowManager.LayoutParams.TYPE_PHONE,
+                WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE,
+                PixelFormat.TRANSLUCENT);
+        candleListwm = new WindowManager.LayoutParams(
                 WindowManager.LayoutParams.WRAP_CONTENT,
                 WindowManager.LayoutParams.WRAP_CONTENT,
                 WindowManager.LayoutParams.TYPE_PHONE,
@@ -177,6 +199,8 @@ public class Widjet extends Service implements ModelObs {
         myParamsBalance.gravity = Gravity.LEFT | Gravity.BOTTOM;
         myParams.gravity = Gravity.RIGHT;
 
+        candleListwm.gravity = Gravity.LEFT | Gravity.TOP;
+
         //myParams.verticalMargin = 20.0f;
         LayoutInflater inflater1 = LayoutInflater.from(this);
         tr = (LinearLayout) inflater1.inflate(R.layout.widgetlay, null);
@@ -194,133 +218,56 @@ public class Widjet extends Service implements ModelObs {
         trMyOrder= (LinearLayout) inflater7.inflate(R.layout.layout_my_orders, null);
         LayoutInflater inflater8 = LayoutInflater.from(this);
         trIzmPrice = (LinearLayout) inflater8.inflate(R.layout.layout_izm_pricez, null);
+        LayoutInflater inflater9 = LayoutInflater.from(this);
+        trSetting = (LinearLayout) inflater9.inflate(R.layout.widjet_setiing, null);
+        LayoutInflater inflater10 = LayoutInflater.from(this);
+        trCandle = (LinearLayout) inflater10.inflate(R.layout.widjet_candles, null);
 
 
 
 
 
-        Button butGrav = (Button) tr.findViewById(R.id.buttonGrav);
+
         Button butChange = (Button) tr.findViewById(R.id.buttonChange);
         widgetScrLay = (LinearLayout) tr.findViewById(R.id.widgetScrLay);
-        settingLay = (LinearLayout)  tr.findViewById(R.id.settingLay);
+        settingLay = (LinearLayout)  trSetting.findViewById(R.id.settingLay);
         myOrderLay = (LinearLayout)  trMyOrder.findViewById(R.id.myOrderLay);
         balanceLay = (LinearLayout)  trBalance.findViewById(R.id.balanceLay);
 
         layBotList = (LinearLayout)  trWidgetbot.findViewById(R.id.layBotList);
 
-        butGrav.setOnClickListener(new View.OnClickListener() {
+
+        Button butGaf = (Button) tr.findViewById(R.id.buttonGrav);
+        butGaf.setText(R.string.grav);
+        butGaf.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                if (myParams.gravity == Gravity.RIGHT) {myParams.gravity = Gravity.LEFT;}
-                else {myParams.gravity = Gravity.RIGHT;}
-                wm.updateViewLayout(tr, myParams);
+
+                new BotFunction(Widjet.this).getCandlestickBars();
+                BinanceState.getInstance().setCandles(true);
             }
         });
+
         butChange.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
                 Toast.makeText(Widjet.this, "this", Toast.LENGTH_SHORT).show();
-                if (settingbool) {
-                    Spinner spinner = new Spinner(Widjet.this);
+                //if (settingbool) {
 
-                    List<TickerPrice> ticcker = BinanceState.getInstance().getTikPrice();
-                    int selectitem = 0;
-                    ArrayList<String> arrayList = new ArrayList<>();
-                    for (int i=0; i<ticcker.size(); i++){
-                        String symbol = ticcker.get(i).getSymbol();
-                        arrayList.add(symbol);
-                        //System.out.println(symbol);
-                        if (symbol.equals(BinanceState.getInstance().getTekPara())){
-                            selectitem = i;
-
-                        }
-                    }
-                    ArrayAdapter<String> arrayAdapter = new ArrayAdapter<String>(Widjet.this, android.R.layout.simple_spinner_item, arrayList);
-                    arrayAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
-                    spinner.setAdapter(arrayAdapter);
-                    spinner.setSelection(selectitem);
-
-                    Spinner spinnerCount = new Spinner(Widjet.this);
-
-                    int tekCount = BinanceState.getInstance().getTekCount();
+                    showSetting();
 
 
-                    ArrayList<String> arrayListCount = new ArrayList<>(Arrays.asList("5", "10", "20", "50", "100", "500", "1000", "5000"));
-
-                    ArrayAdapter<String> arrayAdapterCount = new ArrayAdapter<String>(Widjet.this, android.R.layout.simple_spinner_item, arrayListCount);
-                    arrayAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
-                    spinnerCount.setAdapter(arrayAdapterCount);
-
-                    for (int i=0; i<arrayListCount.size(); i++){
-                        if (arrayListCount.get(i).equals(BinanceState.getInstance().getTekCount()+"")){
-                            spinnerCount.setSelection(i);
-                        }
-                    }
-
-                    settingLay.addView(spinner);
-                    settingLay.addView(spinnerCount);
-                    settingbool = false;
-
-                    //listener
-                    spinner.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
-                        @Override
-                        public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
-                            String tutorialsName = parent.getItemAtPosition(position).toString();
-                            Toast.makeText(parent.getContext(), "Selected: " + tutorialsName,          Toast.LENGTH_LONG).show();
-                            BinanceState.getInstance().setTekPara(tutorialsName);
-                            editor.putString("tekPara", tutorialsName);
-                            editor.commit();
-                        }
-                        @Override
-                        public void onNothingSelected(AdapterView <?> parent) {
-                        }
-                    });
-
-                    //listener
-                    spinnerCount.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
-                        @Override
-                        public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
-                            String tutorialsName = parent.getItemAtPosition(position).toString();
-                            Toast.makeText(parent.getContext(), "Selected: " + tutorialsName,          Toast.LENGTH_LONG).show();
-                            BinanceState.getInstance().setTekCount(Integer.parseInt(tutorialsName));
-                            editor.putInt("tekCount", Integer.parseInt(tutorialsName));
-                            editor.commit();
-                        }
-                        @Override
-                        public void onNothingSelected(AdapterView <?> parent) {
-                        }
-                    });
-
-                    CheckBox check_myBalance = new CheckBox(Widjet.this);
-                    check_myBalance.setChecked(BinanceState.getInstance().isMyBalance());
-
-                    check_myBalance.setOnClickListener(new View.OnClickListener() {
-                        @Override
-                        public void onClick(View view) {
-                            boolean checked = check_myBalance.isChecked();
-                            System.out.println("isBalance "+checked);
-                            editor.putBoolean("isBalance", checked);
-                            editor.commit();
-                            BinanceState.getInstance().setMyBalance(checked);
-                            balanceLay.removeAllViews();
-                        }
-                    });
-
-                    settingLay.addView(check_myBalance);
-
-
-
-
-                }else{
+                /*}else{
                     settingLay.removeAllViews();
                     settingbool = true;
-                }
+                }*/
             }
         });
         wm.addView(trBalance, myParamsBalance);
         wm.addView(trWidgetbot, botListwm);
         wm.addView(trMyOrder, myOrderList);
         wm.addView(tr, myParams);
+
         wm.addView(trIzmPrice, izmPriceListwm);
 
         myOrderclickListener = new View.OnClickListener() {
@@ -337,6 +284,10 @@ public class Widjet extends Service implements ModelObs {
             @Override
             public void onClick(View view) {
                 int idOrder = view.getId();
+
+                MyWidgetButton buttong = (MyWidgetButton) widgetScrLay.findViewById(idOrder) ;
+                buttong.setBackgroundColor(Color.MAGENTA);
+
                 BinanceState binanceState = BinanceState.getInstance();
                 List<OrderBookEntry> priceSell = binanceState.getPriceSell();
                 List<OrderBookEntry> priceBuy = binanceState.getPriceBuy();
@@ -380,6 +331,9 @@ public class Widjet extends Service implements ModelObs {
         List<TickerPrice> tikPrice = binanceState.getTikPrice();
 
         List<PerCentPrices> listpercIzm = SavedAllPrice.getInstance().getListpercIzm();
+        List<TickerPrice> tikPriceFind = Preobr.getInstance().getTiccker();
+        MaxVol maxVol = BinanceState.getInstance().getMaxVol();
+        List<Candlestick> liostCandle = BinanceState.getInstance().getCandlesticks();
 
         switch(argSt){
             case -1:
@@ -404,6 +358,15 @@ public class Widjet extends Service implements ModelObs {
             case 7:
                 setIzmPricez(listpercIzm);
                 break;
+            case 8:
+                setFindParaChange(tikPriceFind);
+                break;
+            case 9:
+                setSetCandleStick(liostCandle);
+                break;
+            case 10:
+                setMaxVol(maxVol);
+                break;
 
         }
 
@@ -416,6 +379,228 @@ public class Widjet extends Service implements ModelObs {
         //все цены
     }
 
+    public void setSetCandleStick(List<Candlestick> liostCandle){
+        //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+   System.out.println("trertertert:");
+        try{
+            CandleView viewCandle = (CandleView) trCandle.findViewById(R.id.candle_view);
+            viewCandle.setListCandleSt(liostCandle);
+            viewCandle.setCandles();
+            viewCandle.invalidate();
+            System.out.println("trertertert:g");
+        }catch(Exception e){
+            System.out.println("trertertert:"+e.getMessage());
+        }
+
+        try {
+        Button buttonCancel = (Button) trCandle.findViewById(R.id.buttonCancelXCandle);
+        View.OnClickListener onclickListen = new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                BinanceState.getInstance().setCandles(false);
+                try {
+                    wm.removeView(trCandle);
+
+                } catch (Exception e) {
+                }
+                ;
+            }
+        };
+        buttonCancel.setOnClickListener(onclickListen);
+
+        RelativeLayout rellay = (RelativeLayout) trCandle.findViewById(R.id.relativCandle);
+        if (BinanceState.getInstance().isCandles()) {
+            wm.addView(trCandle, candleListwm);
+        }
+        CandleView viewCandle = (CandleView) trCandle.findViewById(R.id.candle_view);
+
+
+        viewCandle.post(new Runnable() {
+            @Override
+            public void run() {
+
+                viewCandle.setListCandleSt(liostCandle);
+                viewCandle.setCandles();
+            }
+        });
+
+    }catch(Exception e){}
+
+    }
+
+    public  void setMaxVol(MaxVol maxVol){
+        try {
+            EditText editTextVal = (EditText) trAddOrder.findViewById(R.id.editTextVal);
+            //editTextVal.setText(sellorderbook.getQty());
+            editTextVal.setText(maxVol.getStrVol() + "");
+            Button buttonmaxVal = (Button) trAddOrder.findViewById(R.id.buttonmaxVal);
+            Button buttonmaxVal25 = (Button) trAddOrder.findViewById(R.id.buttonmaxVal25);
+            Button buttonmaxVal50 = (Button) trAddOrder.findViewById(R.id.buttonmaxVal50);
+            Button buttonmaxVal75 = (Button) trAddOrder.findViewById(R.id.buttonmaxVal75);
+            Button buttonminVal = (Button) trAddOrder.findViewById(R.id.buttonminVal);
+            buttonmaxVal.setEnabled(true);
+            buttonmaxVal25.setEnabled(true);
+            buttonmaxVal50.setEnabled(true);
+            buttonmaxVal75.setEnabled(true);
+            buttonminVal.setEnabled(true);
+        }catch(Exception e){System.out.println("except setMaxVol:"+e.getMessage());}
+    }
+
+
+
+    public void showSetting(){
+        try{wm.removeView(trSetting);}catch(Exception e){};
+        settingLay.removeAllViews();
+        Button bottonOk = (Button) trSetting.findViewById(R.id.buttonOk);
+
+        bottonOk.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View view) {
+                    try{wm.removeView(trSetting);}catch(Exception e){};
+                }
+            }
+        );
+
+        EditText textFind = new EditText(Widjet.this);
+        textFind.addTextChangedListener(new TextWatcher() {
+            @Override
+            public void beforeTextChanged(CharSequence charSequence, int i, int i1, int i2) {
+
+            }
+
+            @Override
+            public void onTextChanged(CharSequence charSequence, int i, int i1, int i2) {
+                String textch = textFind.getText()+"";
+                new BotFunction(Widjet.this).changeFindPara(textch);
+            }
+
+            @Override
+            public void afterTextChanged(Editable editable) {
+
+            }
+        });
+
+
+        spinner = new Spinner(Widjet.this);
+
+        List<TickerPrice> ticcker = BinanceState.getInstance().getTikPrice();
+        int selectitem = 0;
+        ArrayList<String> arrayList = new ArrayList<>();
+        for (int i=0; i<ticcker.size(); i++){
+            String symbol = ticcker.get(i).getSymbol();
+            arrayList.add(symbol);
+            System.out.println("symbol:"+symbol);
+            if (symbol.equals(BinanceState.getInstance().getTekPara())){
+                selectitem = i;
+
+            }
+        }
+        ArrayAdapter<String> arrayAdapter = new ArrayAdapter<String>(Widjet.this, android.R.layout.simple_spinner_item, arrayList);
+        arrayAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+        spinner.setAdapter(arrayAdapter);
+        spinner.setSelection(selectitem);
+
+        Spinner spinnerCount = new Spinner(Widjet.this);
+
+        int tekCount = BinanceState.getInstance().getTekCount();
+
+
+        ArrayList<String> arrayListCount = new ArrayList<>(Arrays.asList("5", "10", "20", "50", "100", "500", "1000", "5000"));
+
+        ArrayAdapter<String> arrayAdapterCount = new ArrayAdapter<String>(Widjet.this, android.R.layout.simple_spinner_item, arrayListCount);
+        arrayAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+        spinnerCount.setAdapter(arrayAdapterCount);
+
+        for (int i=0; i<arrayListCount.size(); i++){
+            if (arrayListCount.get(i).equals(BinanceState.getInstance().getTekCount()+"")){
+                spinnerCount.setSelection(i);
+            }
+        }
+
+        settingLay.addView(textFind);
+        settingLay.addView(spinner);
+        settingLay.addView(spinnerCount);
+        settingbool = false;
+
+        //listener
+        spinner.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
+            @Override
+            public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
+                String tutorialsName = parent.getItemAtPosition(position).toString();
+                Toast.makeText(parent.getContext(), "Selected: " + tutorialsName,          Toast.LENGTH_LONG).show();
+                BinanceState.getInstance().setTekPara(tutorialsName);
+                editor.putString("tekPara", tutorialsName);
+                editor.commit();
+            }
+            @Override
+            public void onNothingSelected(AdapterView <?> parent) {
+            }
+        });
+
+        //listener
+        spinnerCount.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
+            @Override
+            public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
+                String tutorialsName = parent.getItemAtPosition(position).toString();
+                Toast.makeText(parent.getContext(), "Selected: " + tutorialsName,          Toast.LENGTH_LONG).show();
+                BinanceState.getInstance().setTekCount(Integer.parseInt(tutorialsName));
+                editor.putInt("tekCount", Integer.parseInt(tutorialsName));
+                editor.commit();
+            }
+            @Override
+            public void onNothingSelected(AdapterView <?> parent) {
+            }
+        });
+
+        CheckBox check_myBalance = new CheckBox(Widjet.this);
+        check_myBalance.setChecked(BinanceState.getInstance().isMyBalance());
+
+        check_myBalance.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                boolean checked = check_myBalance.isChecked();
+                System.out.println("isBalance "+checked);
+                editor.putBoolean("isBalance", checked);
+                editor.commit();
+                BinanceState.getInstance().setMyBalance(checked);
+                balanceLay.removeAllViews();
+            }
+        });
+
+        settingLay.addView(check_myBalance);
+        Button butGrav = new Button(Widjet.this);
+        butGrav.setText(R.string.grav);
+        butGrav.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                if (myParams.gravity == Gravity.RIGHT) {myParams.gravity = Gravity.LEFT;}
+                else {myParams.gravity = Gravity.RIGHT;}
+                wm.updateViewLayout(tr, myParams);
+            }
+        });
+        settingLay.addView(butGrav);
+
+        wm.addView(trSetting, mySetting);
+    }
+
+    public void setFindParaChange(List<TickerPrice> tikPriceFind){
+        if (spinner != null){
+            List<TickerPrice> ticcker = tikPriceFind;
+            int selectitem = 0;
+            ArrayList<String> arrayList = new ArrayList<>();
+            for (int i=0; i<ticcker.size(); i++){
+                String symbol = ticcker.get(i).getSymbol();
+                arrayList.add(symbol);
+                //System.out.println(symbol);
+
+            }
+            ArrayAdapter<String> arrayAdapter = new ArrayAdapter<String>(Widjet.this, android.R.layout.simple_spinner_item, arrayList);
+            arrayAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+            spinner.setAdapter(arrayAdapter);
+            spinner.setSelection(selectitem);
+
+        }
+    }
 
     public void setIzmPricez(List<PerCentPrices> listpercIz) {
         LinearLayout izmLay = (LinearLayout) trIzmPrice.findViewById(R.id.layoutIzmPrice);
@@ -433,6 +618,21 @@ public class Widjet extends Service implements ModelObs {
         }
 
         if (boolPercentPokz) {
+            MyWidgetButton butttestSkrit = new MyWidgetButton(this);
+            butttestSkrit.setTextSize(12.0f);
+            butttestSkrit.setBackgroundColor(Color.BLACK);
+            butttestSkrit.setPadding(5, 0, 5, 0);
+            butttestSkrit.setMaxHeight(20);
+            butttestSkrit.setText(R.string.skrit);
+            butttestSkrit.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View view) {
+                    izmLay.removeAllViews();
+                    boolPercentPokz = false;
+                    ObservableSave.getObs().update(7);
+                }
+            });
+            izmLay.addView(butttestSkrit);
             for (int i = 0; i < listpercIz.size(); i++) {
                 PerCentPrices perCentPrices = listpercIz.get(i);
                 LinearLayout linllm = new LinearLayout(Widjet.this);
@@ -448,17 +648,14 @@ public class Widjet extends Service implements ModelObs {
                     butttest1.setTextColor(Color.rgb(255, 100, 100));
 
                 butttest1.setPadding(5, 0, 5, 0);
-                butttest1.setMaxHeight(20);
+                butttest1.setMaxHeight(30);
                 butttest1.setWidth(80);
                 butttest1.setText(perCentPrices.getName() + "");
 
                 butttest1.setOnClickListener(new View.OnClickListener() {
                     @Override
                     public void onClick(View view) {
-                        izmLay.removeAllViews();
-
-                        boolPercentPokz = false;
-                        ObservableSave.getObs().update(7);
+                        BinanceState.getInstance().setTekPara(perCentPrices.getName());
                     }
                 });
 
@@ -473,7 +670,7 @@ public class Widjet extends Service implements ModelObs {
                     butttest2.setTextColor(Color.rgb(255, 100, 100));
 
                 butttest2.setPadding(5, 0, 5, 0);
-                butttest2.setMaxHeight(20);
+                butttest2.setMaxHeight(30);
                 butttest2.setWidth(70);
                 butttest2.setText(perCentPrices.getPercent() + "%");
                 MyWidgetButton butttest3 = new MyWidgetButton(this);
@@ -486,7 +683,7 @@ public class Widjet extends Service implements ModelObs {
                     butttest3.setTextColor(Color.rgb(255, 100, 100));
 
                 butttest3.setPadding(5, 0, 5, 0);
-                butttest3.setMaxHeight(20);
+                butttest3.setMaxHeight(30);
                 butttest3.setText(perCentPrices.getPeriod() + "");
                 butttest3.setWidth(40);
                 linllm.addView(butttest1);
@@ -753,6 +950,9 @@ public class Widjet extends Service implements ModelObs {
         Button buttonDownOrder = (Button) trChangeOrder.findViewById(R.id.buttonDown);
         Button buttonUpOrder = (Button) trChangeOrder.findViewById(R.id.buttonUp);
         EditText colperEditText = (EditText) trChangeOrder.findViewById(R.id.editTextColPer);
+
+        Button buttonBot = (Button) trChangeOrder.findViewById(R.id.buttonBot);
+
         colperEditText.setText("1");
 
         View.OnClickListener onclickListenrmyOrder = new View.OnClickListener() {
@@ -796,7 +996,9 @@ public class Widjet extends Service implements ModelObs {
 
                         try{wm.removeView(trChangeOrder);}catch(Exception e){};
                         break;
-
+                    case R.id.buttonBot:
+                        BotOpiration.getInstance().addOpirationOrder(new PerestanovOpiration(), Widjet.this);
+                        break;
                 }
 
             }
@@ -805,6 +1007,7 @@ public class Widjet extends Service implements ModelObs {
         buttonCancelOrder.setOnClickListener(onclickListenrmyOrder);
         buttonDownOrder.setOnClickListener(onclickListenrmyOrder);
         buttonUpOrder.setOnClickListener(onclickListenrmyOrder);
+        buttonBot.setOnClickListener(onclickListenrmyOrder);
 
         LinearLayout llOrderInfo = (LinearLayout) trChangeOrder.findViewById(R.id.layOrderInfo);
         llOrderInfo.removeAllViews();
@@ -825,7 +1028,7 @@ public class Widjet extends Service implements ModelObs {
         llOrderInfo.addView(textOrder_Price);
 
         TextView textOrder_Data = new TextView(this);
-        textOrder_Data.setText("Time: "+ Preobr.getDataMyFormat(order.getTime()));
+        textOrder_Data.setText("Time: "+ Preobr.getInstance().getDataMyFormat(order.getTime()));
         textOrder_Data.setTextColor(Color.BLACK);
         llOrderInfo.addView(textOrder_Data);
 
@@ -833,7 +1036,10 @@ public class Widjet extends Service implements ModelObs {
 
     }
 
+    private double colMaxVol = 0.0;
+
     public void showDiologAddOrder(OrderBookEntry sellorderbook, String typeAdd){
+        colMaxVol = 0.0;
         try{wm.removeView(trAddOrder);}catch(Exception e){};
         if (sellorderbook == null) return;
         AddOrder newAddOrder = new AddOrder(Double.parseDouble(sellorderbook.getPrice()), Double.parseDouble(sellorderbook.getQty()), typeAdd, BinanceState.getInstance().getTekPara());
@@ -857,10 +1063,14 @@ public class Widjet extends Service implements ModelObs {
         Button buttoncancel = (Button) trAddOrder.findViewById(R.id.buttonCancelad);
         Button goOrderAddLimit = (Button) trAddOrder.findViewById(R.id.goOrderAddLimit);
         Button buttonmaxVal = (Button) trAddOrder.findViewById(R.id.buttonmaxVal);
+        Button buttonmaxVal25 = (Button) trAddOrder.findViewById(R.id.buttonmaxVal25);
+        Button buttonmaxVal50 = (Button) trAddOrder.findViewById(R.id.buttonmaxVal50);
+        Button buttonmaxVal75 = (Button) trAddOrder.findViewById(R.id.buttonmaxVal75);
+        Button buttonminVal = (Button) trAddOrder.findViewById(R.id.buttonminVal);
 
         EditText editTextVal = (EditText)  trAddOrder.findViewById(R.id.editTextVal);
-        editTextVal.setText(sellorderbook.getQty());
-
+        //editTextVal.setText(sellorderbook.getQty());
+        editTextVal.setText(colMaxVol+"");
 
         editTextVal.addTextChangedListener(new TextWatcher() {
             @Override
@@ -891,7 +1101,59 @@ public class Widjet extends Service implements ModelObs {
                         try{wm.removeView(trAddOrder);}catch(Exception e){};
                         break;
                     case R.id.buttonmaxVal:
-                        editTextVal.setText(Math.floor(75/Double.parseDouble(sellorderbook.getPrice()))+"");
+                        buttonmaxVal.setEnabled(false);
+                        Runnable runa = new Runnable() {
+                            @Override
+                            public void run() {
+                                Double maxVol = new BotFunction(Widjet.this).getMaxVolume(Double.parseDouble(sellorderbook.getPrice()), BinanceState.getInstance().getTekPara(), typeAdd, 100);
+
+                            }
+                        };
+                        new Thread(runa).start();
+                        break;
+                    case R.id.buttonmaxVal25:
+                        buttonmaxVal25.setEnabled(false);
+                        Runnable runa25 = new Runnable() {
+                            @Override
+                            public void run() {
+                                Double maxVol = new BotFunction(Widjet.this).getMaxVolume(Double.parseDouble(sellorderbook.getPrice()), BinanceState.getInstance().getTekPara(), typeAdd, 25);
+
+                            }
+                        };
+                        new Thread(runa25).start();
+                        break;
+                    case R.id.buttonmaxVal50:
+                        buttonmaxVal50.setEnabled(false);
+                        Runnable runa50 = new Runnable() {
+                            @Override
+                            public void run() {
+                                Double maxVol = new BotFunction(Widjet.this).getMaxVolume(Double.parseDouble(sellorderbook.getPrice()), BinanceState.getInstance().getTekPara(), typeAdd, 50);
+
+                            }
+                        };
+                        new Thread(runa50).start();
+                        break;
+                    case R.id.buttonmaxVal75:
+                        buttonmaxVal75.setEnabled(false);
+                        Runnable runa75 = new Runnable() {
+                            @Override
+                            public void run() {
+                                Double maxVol = new BotFunction(Widjet.this).getMaxVolume(Double.parseDouble(sellorderbook.getPrice()), BinanceState.getInstance().getTekPara(), typeAdd, 75);
+
+                            }
+                        };
+                        new Thread(runa75).start();
+                        break;
+                    case R.id.buttonminVal:
+                        buttonminVal.setEnabled(false);
+                        Runnable runa0 = new Runnable() {
+                            @Override
+                            public void run() {
+                                Double maxVol = new BotFunction(Widjet.this).getMaxVolume(Double.parseDouble(sellorderbook.getPrice()), BinanceState.getInstance().getTekPara(), typeAdd, 0);
+
+                            }
+                        };
+                        new Thread(runa0).start();
                         break;
                     case R.id.goOrderAddLimit:
                         ActionBot_LimitOrder orderAction2 = new ActionBot_LimitOrder(newAddOrder, 0);
@@ -906,6 +1168,10 @@ public class Widjet extends Service implements ModelObs {
         buttoncancel.setOnClickListener(onclickListenrmyOrder);
         goOrderAddLimit.setOnClickListener(onclickListenrmyOrder);
         buttonmaxVal.setOnClickListener(onclickListenrmyOrder);
+        buttonmaxVal25.setOnClickListener(onclickListenrmyOrder);
+        buttonmaxVal50.setOnClickListener(onclickListenrmyOrder);
+        buttonmaxVal75.setOnClickListener(onclickListenrmyOrder);
+        buttonminVal.setOnClickListener(onclickListenrmyOrder);
 
         TextView textOrder_Price = new TextView(this);
         textOrder_Price.setText("Price: "+sellorderbook.getPrice());
@@ -1032,6 +1298,15 @@ public class Widjet extends Service implements ModelObs {
                 this.startService(intet);
                 break;
             case 7:
+                this.startService(intet);
+                break;
+            case 8: //findPara
+                this.startService(intet);
+                break;
+            case 9: //сфтвдуЫешсл
+                this.startService(intet);
+                break;
+            case 10: //maxVol
                 this.startService(intet);
                 break;
         }

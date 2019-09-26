@@ -13,6 +13,7 @@ import com.example.myapplication.bot.ActionBotInterface;
 import com.example.myapplication.bot.ActionBot_CancelOrder;
 import com.example.myapplication.bot.ActionBot_LimitOrder;
 import com.example.myapplication.bot.AddOrder;
+import com.example.myapplication.botOpiration.OpirationOrder;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.JsonArray;
@@ -39,6 +40,18 @@ public class SaverInstruct {
     }
 
     public void saveArrayList(String name, List<ActionBotInterface> list, Context context) {
+        SharedPreferences prefs = context.getSharedPreferences("SETTINGSUP", context.MODE_PRIVATE);
+        SharedPreferences.Editor editor = prefs.edit();
+
+        GsonBuilder builder = new GsonBuilder();
+        Gson gson = builder.create();
+        String jsonList =  gson.toJson(list);
+        System.out.println("save:"+jsonList);
+        System.out.println("savelist:"+list);
+        editor.putString(name, jsonList).apply();
+    }
+
+    public void saveArrayListOpirationOrder(String name, List<OpirationOrder> list, Context context) {
         SharedPreferences prefs = context.getSharedPreferences("SETTINGSUP", context.MODE_PRIVATE);
         SharedPreferences.Editor editor = prefs.edit();
 

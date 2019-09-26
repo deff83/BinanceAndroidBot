@@ -18,8 +18,10 @@ import com.example.myapplication.binance.APIBinance;
 import com.example.myapplication.binance.BinanceState;
 import com.example.myapplication.bot.ActionBotInterface;
 import com.example.myapplication.bot.ActionBot_CancelOrder;
+import com.example.myapplication.bot.BotFunction;
 import com.example.myapplication.bot.Keeper;
 import com.example.myapplication.bot.Performer;
+import com.example.myapplication.botOpiration.BotOpiration;
 import com.example.myapplication.customObjects.SaverInstruct;
 
 import java.util.ArrayList;
@@ -33,7 +35,7 @@ import java.util.concurrent.TimeUnit;
 public class ServiceBin extends Service {
     BinanceState binanceState;
     APIBinance apibinance;
-    private ScheduledExecutorService executor, executor2, executor3, executor4, executor5, executor6;
+    private ScheduledExecutorService executor, executor2, executor3, executor4, executor5, executor6, executor7, executor8;
     //Таймер запросов
     private static Timer timer = new Timer();
 
@@ -55,6 +57,8 @@ public class ServiceBin extends Service {
         executor4 = Executors.newScheduledThreadPool(1);    //MyOrders getOpenOrders
         executor5 = Executors.newScheduledThreadPool(1);    //SHOW Bot list
         executor6 = Executors.newScheduledThreadPool(1);    //Perfom Bot list
+        executor7 = Executors.newScheduledThreadPool(1);    //Bot if
+        executor8 = Executors.newScheduledThreadPool(1);    //Candles
 
         binanceState = BinanceState.getInstance();
         apibinance = APIBinance.getInstance();
@@ -161,6 +165,28 @@ public class ServiceBin extends Service {
                 }
             }
         };
+        Runnable runnPerfomBot = new Runnable() {
+            @Override
+            public void run() {
+                try {
+                    BotOpiration.getInstance().start();
+                }catch(Exception e){
+                    e.printStackTrace();
+                }
+            }
+        };
+        Runnable runnCandles = new Runnable() {
+            @Override
+            public void run() {
+                try {
+                    if (BinanceState.getInstance().isCandles()) {
+                        new BotFunction(getApplicationContext()).getCandlestickBars();
+                    }
+                }catch(Exception e){
+                    e.printStackTrace();
+                }
+            }
+        };
         Runnable runnableExchengInfo = new Runnable() {
             @Override
             public void run() {
@@ -189,6 +215,8 @@ public class ServiceBin extends Service {
         executor4.scheduleWithFixedDelay(runnMyOrder, 0, 10, TimeUnit.SECONDS);
         executor5.scheduleWithFixedDelay(runnListBot, 0, 5, TimeUnit.SECONDS);
         executor6.scheduleWithFixedDelay(runnPerfomListBot, 0, 5, TimeUnit.SECONDS);
+        executor7.scheduleWithFixedDelay(runnPerfomBot, 0, 2, TimeUnit.SECONDS);
+        executor8.scheduleWithFixedDelay(runnCandles, 0, 5, TimeUnit.SECONDS);
 
         return Service.START_STICKY;
     }

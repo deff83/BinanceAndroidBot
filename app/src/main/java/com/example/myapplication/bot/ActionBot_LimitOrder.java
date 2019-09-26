@@ -54,7 +54,6 @@ public class ActionBot_LimitOrder implements ActionBotInterface {
 
                 if (addorder.getTypeOrder().equals("BUY")){
                     listBookEntry = orderBook.getBids();
-                    //количество токенов на покупку пересчитать
                   }
 
                 String luchCen = listBookEntry.get(0).getPrice();
@@ -70,9 +69,8 @@ public class ActionBot_LimitOrder implements ActionBotInterface {
                 }
 
 
-
-                System.out.println("teeest:"+addorder.getTypeOrder());
                 if (addorder.getTypeOrder().equals("BUY")) {
+                    //пересчитаь обьем сделки
                     addorder.setValue(Math.floor(addorder.getValue() * addorder.getPrice() / Double.parseDouble(newPrice))-1);
 
                     System.out.println("teeest:"+addorder.getValue()+" "+addorder.getPrice()+" "+Double.parseDouble(newPrice));
