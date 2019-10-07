@@ -8,6 +8,7 @@ import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.LinearGradient;
 import android.graphics.PixelFormat;
+import android.graphics.Point;
 import android.graphics.Shader;
 import android.graphics.drawable.ClipDrawable;
 import android.graphics.drawable.GradientDrawable;
@@ -17,8 +18,11 @@ import android.os.Message;
 import android.print.PrintAttributes;
 import android.text.Editable;
 import android.text.TextWatcher;
+import android.util.Log;
+import android.view.Display;
 import android.view.Gravity;
 import android.view.LayoutInflater;
+import android.view.MotionEvent;
 import android.view.View;
 import android.view.WindowManager;
 import android.widget.AdapterView;
@@ -36,14 +40,19 @@ import android.widget.Toast;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.binance.api.client.BinanceApiClientFactory;
+import com.binance.api.client.BinanceApiWebSocketClient;
 import com.binance.api.client.domain.OrderSide;
 import com.binance.api.client.domain.account.Account;
 import com.binance.api.client.domain.account.AssetBalance;
 import com.binance.api.client.domain.account.Order;
+import com.binance.api.client.domain.event.AccountUpdateEvent;
+import com.binance.api.client.domain.event.OrderTradeUpdateEvent;
+import com.binance.api.client.domain.event.UserDataUpdateEvent;
 import com.binance.api.client.domain.market.Candlestick;
 import com.binance.api.client.domain.market.OrderBook;
 import com.binance.api.client.domain.market.OrderBookEntry;
 import com.binance.api.client.domain.market.TickerPrice;
+import com.example.myapplication.binance.APIBinance;
 import com.example.myapplication.binance.BinanceState;
 import com.example.myapplication.binance.Pokazatel;
 import com.example.myapplication.binance.SortAsset;
@@ -80,6 +89,7 @@ public class Widjet extends Service implements ModelObs {
     LinearLayout tr, trBalance, trChangeOrder, trWidgetbot, trAddOrder, trWidgetDopFunctio, trMyOrder, trIzmPrice, trSetting, trCandle;
     LinearLayout widgetScrLay, settingLay, balanceLay, myOrderLay, layBotList;
     View.OnClickListener myOrderclickListener, onClickListBook;
+    View.OnTouchListener listenerOrderPriceList;
     int argSt = 1;
     Comparator balanceComparator = new SortAsset();
     boolean settingbool = true;
@@ -311,6 +321,29 @@ public class Widjet extends Service implements ModelObs {
                 showDiologAddOrder(sellorderbook, typeAdd);
             }
         };
+        WindowManager wm = (WindowManager) getApplicationContext().getSystemService(Context.WINDOW_SERVICE);
+        Display display = wm.getDefaultDisplay();
+
+
+        listenerOrderPriceList = new View.OnTouchListener() {
+            @Override
+            public boolean onTouch(View view, MotionEvent motionEvent) {
+                switch (motionEvent.getAction()) {
+                    case MotionEvent.ACTION_MOVE:
+                        //System.out.println("ACTION_MOVE:" + motionEvent.getRawX());
+                        //System.out.println("ACTION_MOVE:" + display.getWidth());
+                        if(motionEvent.getRawX()>(display.getWidth()/2)){
+                            myParams.gravity = Gravity.RIGHT;
+                            wm.updateViewLayout(tr, myParams);
+                        }else{
+                            myParams.gravity = Gravity.LEFT;
+                            wm.updateViewLayout(tr, myParams);
+                        }
+                        break;
+                }
+                return false;
+            }
+        };
 
         //добавим в слушателя в список
         ObservableSave.getObs().addModel(this);
@@ -334,6 +367,7 @@ public class Widjet extends Service implements ModelObs {
         List<TickerPrice> tikPriceFind = Preobr.getInstance().getTiccker();
         MaxVol maxVol = BinanceState.getInstance().getMaxVol();
         List<Candlestick> liostCandle = BinanceState.getInstance().getCandlesticks();
+        OrderTradeUpdateEvent orderTradeUpdateEvent =  BinanceState.getInstance().getOrderTradeUpdateEvent();
 
         switch(argSt){
             case -1:
@@ -367,6 +401,9 @@ public class Widjet extends Service implements ModelObs {
             case 10:
                 setMaxVol(maxVol);
                 break;
+            case 11:
+                eventOrder(orderTradeUpdateEvent);
+                break;
 
         }
 
@@ -377,6 +414,14 @@ public class Widjet extends Service implements ModelObs {
     }
     public void setTickAllPricez(List<TickerPrice> tikPrice){
         //все цены
+    }
+
+    public void eventOrder(OrderTradeUpdateEvent orderTradeUpdateEvent){
+        Toast.makeText(this, orderTradeUpdateEvent.getExecutionType()+":"
+                        + orderTradeUpdateEvent.getSymbol()+":"
+                        + orderTradeUpdateEvent.getSide().name()+":"
+                        + orderTradeUpdateEvent.getPrice()
+                , Toast.LENGTH_SHORT).show();
     }
 
     public void setSetCandleStick(List<Candlestick> liostCandle){
@@ -410,8 +455,7 @@ public class Widjet extends Service implements ModelObs {
 
         RelativeLayout rellay = (RelativeLayout) trCandle.findViewById(R.id.relativCandle);
         if (BinanceState.getInstance().isCandles()) {
-            wm.addView(trCandle, candleListwm);
-        }
+            wm.addView(trCandle, candleListwm);         }
         CandleView viewCandle = (CandleView) trCandle.findViewById(R.id.candle_view);
 
 
@@ -716,6 +760,7 @@ public class Widjet extends Service implements ModelObs {
         myOrderLay.removeAllViews();
         BinanceState binanceState = BinanceState.getInstance();
         List<Order> myOrdersTek = binanceState.getMyOrdersTek();
+        double mnozhitel = Pokazatel.getInstance().getMnozitel(BinanceState.getInstance().getTekPara());
         for(int i = 0; i<myOrdersTek.size(); i++){
             Order myorder = myOrdersTek.get(i);
             MyWidgetButton butttest1 = new MyWidgetButton(this);
@@ -724,7 +769,11 @@ public class Widjet extends Service implements ModelObs {
             butttest1.setBackgroundColor(Color.BLACK);
             butttest1.setPadding(5, 0, 5, 0);
             butttest1.setMaxHeight(20);
-            butttest1.setText(myorder.getSide()+":"+myorder.getPrice());
+            double val = Double.parseDouble(myorder.getOrigQty());
+            double priceTe = Double.parseDouble( myorder.getPrice());
+
+
+            butttest1.setText(myorder.getSide()+":"+myorder.getPrice()+"("+Math.round(val*priceTe*mnozhitel*100)/100+")");///////////////////////////////////jjjjjjjjjjjjj
             butttest1.setId((int)(myorder.getOrderId()%1000000000));
 
             butttest1.setOnClickListener(myOrderclickListener);
@@ -933,7 +982,7 @@ public class Widjet extends Service implements ModelObs {
 
             widgetScrLay.addView(ll);
         }
-
+        widgetScrLay.setOnTouchListener(listenerOrderPriceList);
     }
 
     public void showDiologOrder(Order order){
@@ -1096,72 +1145,81 @@ public class Widjet extends Service implements ModelObs {
         View.OnClickListener onclickListenrmyOrder = new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                switch (view.getId()){
-                    case R.id.buttonCancelad:
-                        try{wm.removeView(trAddOrder);}catch(Exception e){};
-                        break;
-                    case R.id.buttonmaxVal:
-                        buttonmaxVal.setEnabled(false);
-                        Runnable runa = new Runnable() {
-                            @Override
-                            public void run() {
-                                Double maxVol = new BotFunction(Widjet.this).getMaxVolume(Double.parseDouble(sellorderbook.getPrice()), BinanceState.getInstance().getTekPara(), typeAdd, 100);
 
+                    switch (view.getId()) {
+                        case R.id.buttonCancelad:
+                            try {
+                                wm.removeView(trAddOrder);
+                            } catch (Exception e) {
                             }
-                        };
-                        new Thread(runa).start();
-                        break;
-                    case R.id.buttonmaxVal25:
-                        buttonmaxVal25.setEnabled(false);
-                        Runnable runa25 = new Runnable() {
-                            @Override
-                            public void run() {
-                                Double maxVol = new BotFunction(Widjet.this).getMaxVolume(Double.parseDouble(sellorderbook.getPrice()), BinanceState.getInstance().getTekPara(), typeAdd, 25);
+                            ;
+                            break;
+                        case R.id.buttonmaxVal:
+                            buttonmaxVal.setEnabled(false);
+                            Runnable runa = new Runnable() {
+                                @Override
+                                public void run() {
+                                    Double maxVol = new BotFunction(Widjet.this).getMaxVolume(Double.parseDouble(sellorderbook.getPrice()), BinanceState.getInstance().getTekPara(), typeAdd, 100);
 
+                                }
+                            };
+                            new Thread(runa).start();
+                            break;
+                        case R.id.buttonmaxVal25:
+                            buttonmaxVal25.setEnabled(false);
+                            Runnable runa25 = new Runnable() {
+                                @Override
+                                public void run() {
+                                    Double maxVol = new BotFunction(Widjet.this).getMaxVolume(Double.parseDouble(sellorderbook.getPrice()), BinanceState.getInstance().getTekPara(), typeAdd, 25);
+
+                                }
+                            };
+                            new Thread(runa25).start();
+                            break;
+                        case R.id.buttonmaxVal50:
+                            buttonmaxVal50.setEnabled(false);
+                            Runnable runa50 = new Runnable() {
+                                @Override
+                                public void run() {
+                                    Double maxVol = new BotFunction(Widjet.this).getMaxVolume(Double.parseDouble(sellorderbook.getPrice()), BinanceState.getInstance().getTekPara(), typeAdd, 50);
+
+                                }
+                            };
+                            new Thread(runa50).start();
+                            break;
+                        case R.id.buttonmaxVal75:
+                            buttonmaxVal75.setEnabled(false);
+                            Runnable runa75 = new Runnable() {
+                                @Override
+                                public void run() {
+                                    Double maxVol = new BotFunction(Widjet.this).getMaxVolume(Double.parseDouble(sellorderbook.getPrice()), BinanceState.getInstance().getTekPara(), typeAdd, 75);
+
+                                }
+                            };
+                            new Thread(runa75).start();
+                            break;
+                        case R.id.buttonminVal:
+                            buttonminVal.setEnabled(false);
+                            Runnable runa0 = new Runnable() {
+                                @Override
+                                public void run() {
+                                    Double maxVol = new BotFunction(Widjet.this).getMaxVolume(Double.parseDouble(sellorderbook.getPrice()), BinanceState.getInstance().getTekPara(), typeAdd, 0);
+
+                                }
+                            };
+                            new Thread(runa0).start();
+                            break;
+                        case R.id.goOrderAddLimit:
+                            ActionBot_LimitOrder orderAction2 = new ActionBot_LimitOrder(newAddOrder, 0);
+                            Keeper.getInstance().addAction(orderAction2, Widjet.this);
+                            try {
+                                wm.removeView(trAddOrder);
+                            } catch (Exception e) {
                             }
-                        };
-                        new Thread(runa25).start();
-                        break;
-                    case R.id.buttonmaxVal50:
-                        buttonmaxVal50.setEnabled(false);
-                        Runnable runa50 = new Runnable() {
-                            @Override
-                            public void run() {
-                                Double maxVol = new BotFunction(Widjet.this).getMaxVolume(Double.parseDouble(sellorderbook.getPrice()), BinanceState.getInstance().getTekPara(), typeAdd, 50);
+                            ;
+                            break;
 
-                            }
-                        };
-                        new Thread(runa50).start();
-                        break;
-                    case R.id.buttonmaxVal75:
-                        buttonmaxVal75.setEnabled(false);
-                        Runnable runa75 = new Runnable() {
-                            @Override
-                            public void run() {
-                                Double maxVol = new BotFunction(Widjet.this).getMaxVolume(Double.parseDouble(sellorderbook.getPrice()), BinanceState.getInstance().getTekPara(), typeAdd, 75);
-
-                            }
-                        };
-                        new Thread(runa75).start();
-                        break;
-                    case R.id.buttonminVal:
-                        buttonminVal.setEnabled(false);
-                        Runnable runa0 = new Runnable() {
-                            @Override
-                            public void run() {
-                                Double maxVol = new BotFunction(Widjet.this).getMaxVolume(Double.parseDouble(sellorderbook.getPrice()), BinanceState.getInstance().getTekPara(), typeAdd, 0);
-
-                            }
-                        };
-                        new Thread(runa0).start();
-                        break;
-                    case R.id.goOrderAddLimit:
-                        ActionBot_LimitOrder orderAction2 = new ActionBot_LimitOrder(newAddOrder, 0);
-                        Keeper.getInstance().addAction(orderAction2, Widjet.this);
-                        try{wm.removeView(trAddOrder);}catch(Exception e){};
-                        break;
-
-                }
+                    }
 
             }
         };
@@ -1266,6 +1324,8 @@ public class Widjet extends Service implements ModelObs {
 
     }
 
+
+
     @Override
     public void onDestroy() {
         ObservableSave.getObs().removeModel(this);
@@ -1307,6 +1367,9 @@ public class Widjet extends Service implements ModelObs {
                 this.startService(intet);
                 break;
             case 10: //maxVol
+                this.startService(intet);
+                break;
+            case 11: //eventOrder
                 this.startService(intet);
                 break;
         }

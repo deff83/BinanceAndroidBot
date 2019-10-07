@@ -201,6 +201,18 @@ public class BotFunction {
         return tick;
     }
 
+    public static Double getSize(String para){
+        ExchangeInfo exchangeInfo = BinanceState.getInstance().getExchangeInfo();
+        if (exchangeInfo == null) return 0.0;
+        // Obtain symbol information
+        SymbolInfo symbolInfo = exchangeInfo.getSymbolInfo(para);
+        SymbolFilter pricefilter = symbolInfo.getSymbolFilter(FilterType.LOT_SIZE);
+
+        double tick = Double.parseDouble(pricefilter.getStepSize());
+        return tick;
+    }
+
+
 
 
     public void setColPer(int colPer) {
@@ -419,8 +431,13 @@ public class BotFunction {
         }
 
         if (percent==0){
-            System.out.println("getMaxVolume:"+ getMinNational(para));
-            maxVol.setMaxVol(getMinNational(para));
+            Double minNotional = getMinNational(para);
+            double sizestep = getSize(para);
+            System.out.println("getMaxVolume:size"+ sizestep);
+
+
+            System.out.println("getMaxVolume:"+ Math.ceil((minNotional/price)/sizestep)*sizestep);
+            maxVol.setMaxVol(Math.ceil((minNotional/price)/sizestep)*sizestep);
         }
 
         BinanceState.getInstance().setMaxVol(maxVol);

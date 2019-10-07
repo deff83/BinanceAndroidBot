@@ -2,6 +2,7 @@ package com.example.myapplication.binance;
 
 import com.binance.api.client.domain.account.Account;
 import com.binance.api.client.domain.account.Order;
+import com.binance.api.client.domain.event.OrderTradeUpdateEvent;
 import com.binance.api.client.domain.general.ExchangeInfo;
 import com.binance.api.client.domain.market.Candlestick;
 import com.binance.api.client.domain.market.CandlestickInterval;
@@ -28,6 +29,7 @@ public class BinanceState {
     private List<Candlestick> candlesticks = new ArrayList<>();
     private MaxVol maxVol = new MaxVol();
     private CandlestickInterval intervalCandle = CandlestickInterval.FIVE_MINUTES;
+    private OrderTradeUpdateEvent orderTradeUpdateEvent;
 
     private ExchangeInfo exchangeInfo = null;
     private  boolean isMyBalance = true;
@@ -192,6 +194,16 @@ public class BinanceState {
         this.candlesticks = candlesticks;
     }
 
+    public void addListCandl(List<Candlestick> listaddcandle){
+        if (listaddcandle != null && !listaddcandle.isEmpty()) {
+            List<Candlestick> result = new ArrayList<>(listaddcandle.size() + candlesticks.size());
+            result.addAll(listaddcandle);
+            result.addAll(candlesticks);
+
+            candlesticks = result;
+        }
+    }
+
     public Order getOrderById(int id){
         for (int i=0; i<myOrdersTek.size(); i++){
             Order myOrderItem = myOrdersTek.get(i);
@@ -201,6 +213,11 @@ public class BinanceState {
         }
         return null;
     };
+
+    public OrderTradeUpdateEvent getOrderTradeUpdateEvent() {   return orderTradeUpdateEvent; }
+
+    public void setOrderTradeUpdateEvent(OrderTradeUpdateEvent orderTradeUpdateEvent) {    this.orderTradeUpdateEvent = orderTradeUpdateEvent; }
+
     @Override
     public String toString() {
         return "BinanceState{" +

@@ -13,8 +13,8 @@ import javax.crypto.spec.SecretKeySpec;
 
 public class APIBinance {
     private BinanceApiRestClient client;
-    private String API_KEY = "91gOvraoYNNdG06sHeEyYbP02VHQn5AK3esuw9tqWYMcOL9PXFloyaKhIlPxu3ZoS";
-    private String SECRET = "OQ4qlZXW2oGJDvTU0OWjMG4IiFu28ffrJ6bbzFOY2kOC480Vget3icjkhFgUV5MoG";
+    private String API_KEY = "UeiTyPITOEpG5LpsOQrGgTTyhyrrOSycSOxIKdbB9dcsRCKnYJb3Pe0dDXEEefWoz";
+    private String SECRET = "ctkiXCzjpsbmAtP4EmCecKJ4dpcVMKxxq0B6NrNDICg4SawFApTkFJjtzyWQAN1lV";
 
     private static final APIBinance ourInstance = new APIBinance();
 
@@ -48,5 +48,13 @@ public class APIBinance {
 
     public String getAPI_KEY() {
         return API_KEY;
+    }
+
+    public String get_listenKey(){
+        return client.startUserDataStream();
+
+    }
+    public void keepAliveUserDataStream(String streamId){
+        client.keepAliveUserDataStream(streamId);
     }
 }
