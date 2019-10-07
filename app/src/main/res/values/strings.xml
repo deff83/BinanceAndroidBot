@@ -15,16 +15,27 @@
     <string name="menu_send">Send</string>
 
     <string name="cancel_order">Отмена ордера</string>
+    <string name="bot_order">Бот</string>
     <string name="down_order">Вниз</string>
     <string name="up_order">Вверх</string>
     <string name="cancel">Cancel</string>
+    <string name="ok">Ok</string>
 
     <string name="goOrder">Отправить</string>
-    <string name="maxVal">Максимальный обьем</string>
+    <string name="maxVal">Max</string>
+    <string name="minVal">Min</string>
     <string name="postFollow">Поставить впереди</string>
     <string name="postNachalo">Перепоставить</string>
     <string name="pereOrder">Перестановка ордера</string>
 
     <string name="dopTitle">Дополнительные функции</string>
+
+    <string name="skrit">Скрыть</string>
+    <string name="grav">Grav</string>
+
+    <string name="setting">Настройки</string>
+
+    <string name="x">X</string>
+
 
 </resources>
