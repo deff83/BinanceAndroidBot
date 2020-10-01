@@ -31,12 +31,16 @@ dependencies {
     implementation 'androidx.legacy:legacy-support-v4:1.0.0'
     implementation 'com.google.android.gms:play-services-plus:17.0.0'
     //my libs
-    //implementation 'net.openhft.com.binance.api:binance-api-client:2.17.1'
+    //com.binance.api</groupId>
+    //  <artifactId>binance-api-client</artifactId>
+    //  <version>1.0.0
+   // implementation 'com.binance.api:binance-api-client:1.0.0'
     implementation 'com.google.code.gson:gson:2.8.2'
 
     testImplementation 'junit:junit:4.12'
     androidTestImplementation 'androidx.test:runner:1.2.0'
     androidTestImplementation 'androidx.test.espresso:espresso-core:3.2.0'
-    implementation fileTree(dir: 'C:\\Users\\User\\Desktop\\binance-java-api-master\\classes\\artifacts\\binance_api_client_jar', include: ['*.aar', '*.jar'], exclude: [])
+    //C:\Users\User\IdeaProjects\binance-java-api\out\artifacts
+    implementation fileTree(dir: 'C:\\Users\\User\\IdeaProjects\\binance-java-api\\out\\artifacts\\binance_api_client_jar', include: ['*.aar', '*.jar'], exclude: [])
 
 }

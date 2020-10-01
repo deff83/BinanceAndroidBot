@@ -85,16 +85,18 @@ public class Widjet extends Service implements ModelObs {
     SharedPreferences.Editor editor = null;
     boolean boolPercentPokz = true;
     WindowManager wm;
-    WindowManager.LayoutParams myParams, myParamsBalance, changemyOrder, botListwm, candleListwm,addmyOrder, dopFunction, myOrderList, izmPriceListwm, mySetting;
-    LinearLayout tr, trBalance, trChangeOrder, trWidgetbot, trAddOrder, trWidgetDopFunctio, trMyOrder, trIzmPrice, trSetting, trCandle;
-    LinearLayout widgetScrLay, settingLay, balanceLay, myOrderLay, layBotList;
-    View.OnClickListener myOrderclickListener, onClickListBook;
+    WindowManager.LayoutParams myParams, myParamsMin, myParamsBalance, changemyOrder, botListwm, candleListwm,addmyOrder, dopFunction, myOrderList, izmPriceListwm, mySetting;
+    LinearLayout tr, trmin, trBalance, trChangeOrder, trWidgetbot, trAddOrder, trWidgetDopFunctio, trMyOrder, trIzmPrice, trSetting, trCandle;
+    LinearLayout widgetScrLay, widgetScrLayMin, settingLay, balanceLay, myOrderLay, layBotList;
+    View.OnClickListener myOrderclickListener, onClickListBook, listenerOrderPriceListMin;
     View.OnTouchListener listenerOrderPriceList;
     int argSt = 1;
     Comparator balanceComparator = new SortAsset();
     boolean settingbool = true;
     Handler handler;
     Spinner spinner;
+    private boolean boolMinWiew = false;
+
     public Widjet() {
     }
 
@@ -129,41 +131,48 @@ public class Widjet extends Service implements ModelObs {
         myParams = new WindowManager.LayoutParams(
                 WindowManager.LayoutParams.WRAP_CONTENT,
                 WindowManager.LayoutParams.MATCH_PARENT,
-                WindowManager.LayoutParams.TYPE_PHONE,
+                android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.O ? WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY : WindowManager.LayoutParams.TYPE_PHONE,
+                WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE,
+                PixelFormat.TRANSLUCENT);
+
+        myParamsMin = new WindowManager.LayoutParams(
+                WindowManager.LayoutParams.WRAP_CONTENT,
+                WindowManager.LayoutParams.WRAP_CONTENT,
+                android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.O ? WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY : WindowManager.LayoutParams.TYPE_PHONE,
                 WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE,
                 PixelFormat.TRANSLUCENT);
 
         myParamsBalance = new WindowManager.LayoutParams(
                 WindowManager.LayoutParams.WRAP_CONTENT,
                 WindowManager.LayoutParams.WRAP_CONTENT,
-                WindowManager.LayoutParams.TYPE_PHONE,
+                android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.O ? WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY : WindowManager.LayoutParams.TYPE_PHONE,
                 WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE,
                 PixelFormat.TRANSLUCENT);
 
         changemyOrder = new WindowManager.LayoutParams(
                 WindowManager.LayoutParams.WRAP_CONTENT,
                 WindowManager.LayoutParams.WRAP_CONTENT,
-                WindowManager.LayoutParams.TYPE_PHONE,
+                android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.O ? WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY : WindowManager.LayoutParams.TYPE_PHONE,
                 WindowManager.LayoutParams.FLAG_LAYOUT_NO_LIMITS,
                 PixelFormat.TRANSLUCENT);
         addmyOrder = new WindowManager.LayoutParams(
                 WindowManager.LayoutParams.WRAP_CONTENT,
                 WindowManager.LayoutParams.WRAP_CONTENT,
-                WindowManager.LayoutParams.TYPE_PHONE,
+                android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.O ? WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY : WindowManager.LayoutParams.TYPE_PHONE,
                 WindowManager.LayoutParams.FLAG_LAYOUT_NO_LIMITS,
                 PixelFormat.TRANSLUCENT);
 
         mySetting = new WindowManager.LayoutParams(
                 WindowManager.LayoutParams.WRAP_CONTENT,
                 WindowManager.LayoutParams.WRAP_CONTENT,
-                WindowManager.LayoutParams.TYPE_PHONE,
+                android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.O ? WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY : WindowManager.LayoutParams.TYPE_PHONE,
                 WindowManager.LayoutParams.FLAG_LAYOUT_IN_OVERSCAN,
                 PixelFormat.TRANSLUCENT);
 
         dopFunction = new WindowManager.LayoutParams(
                 WindowManager.LayoutParams.WRAP_CONTENT,
                 WindowManager.LayoutParams.WRAP_CONTENT,
-                WindowManager.LayoutParams.TYPE_PHONE,
+                android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.O ? WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY : WindowManager.LayoutParams.TYPE_PHONE,
                 WindowManager.LayoutParams.FLAG_LAYOUT_NO_LIMITS,
                 PixelFormat.TRANSLUCENT);
 
@@ -171,29 +180,31 @@ public class Widjet extends Service implements ModelObs {
         botListwm = new WindowManager.LayoutParams(
                 WindowManager.LayoutParams.WRAP_CONTENT,
                 WindowManager.LayoutParams.WRAP_CONTENT,
-                WindowManager.LayoutParams.TYPE_PHONE,
+                android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.O ? WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY : WindowManager.LayoutParams.TYPE_PHONE,
                 WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE,
                 PixelFormat.TRANSLUCENT);
         candleListwm = new WindowManager.LayoutParams(
                 WindowManager.LayoutParams.WRAP_CONTENT,
                 WindowManager.LayoutParams.WRAP_CONTENT,
-                WindowManager.LayoutParams.TYPE_PHONE,
+                android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.O ? WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY : WindowManager.LayoutParams.TYPE_PHONE,
                 WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE,
                 PixelFormat.TRANSLUCENT);
 
         izmPriceListwm = new WindowManager.LayoutParams(
                 WindowManager.LayoutParams.WRAP_CONTENT,
                 WindowManager.LayoutParams.WRAP_CONTENT,
-                WindowManager.LayoutParams.TYPE_PHONE,
+                android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.O ? WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY : WindowManager.LayoutParams.TYPE_PHONE,
                 WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE,
                 PixelFormat.TRANSLUCENT);
 
         myOrderList = new WindowManager.LayoutParams(
                 WindowManager.LayoutParams.WRAP_CONTENT,
                 WindowManager.LayoutParams.WRAP_CONTENT,
-                WindowManager.LayoutParams.TYPE_PHONE,
+                android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.O ? WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY : WindowManager.LayoutParams.TYPE_PHONE,
                 WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE,
                 PixelFormat.TRANSLUCENT);
+
+        myParamsMin.gravity = Gravity.TOP | Gravity.CENTER_HORIZONTAL;
 
         myOrderList.gravity = Gravity.RIGHT | Gravity.TOP;
 
@@ -214,6 +225,9 @@ public class Widjet extends Service implements ModelObs {
         //myParams.verticalMargin = 20.0f;
         LayoutInflater inflater1 = LayoutInflater.from(this);
         tr = (LinearLayout) inflater1.inflate(R.layout.widgetlay, null);
+        LayoutInflater inflater1min = LayoutInflater.from(this);
+        trmin = (LinearLayout) inflater1min.inflate(R.layout.widgetlaymin, null);
+
         LayoutInflater inflater2 = LayoutInflater.from(this);
         trBalance = (LinearLayout) inflater2.inflate(R.layout.widjetlaybalance, null);
         LayoutInflater inflater3 = LayoutInflater.from(this);
@@ -240,6 +254,7 @@ public class Widjet extends Service implements ModelObs {
 
         Button butChange = (Button) tr.findViewById(R.id.buttonChange);
         widgetScrLay = (LinearLayout) tr.findViewById(R.id.widgetScrLay);
+        widgetScrLayMin = (LinearLayout) trmin.findViewById(R.id.widgetScrLayMin);
         settingLay = (LinearLayout)  trSetting.findViewById(R.id.settingLay);
         myOrderLay = (LinearLayout)  trMyOrder.findViewById(R.id.myOrderLay);
         balanceLay = (LinearLayout)  trBalance.findViewById(R.id.balanceLay);
@@ -325,6 +340,14 @@ public class Widjet extends Service implements ModelObs {
         Display display = wm.getDefaultDisplay();
 
 
+
+        listenerOrderPriceListMin = new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                showSetting();
+            }
+        };
+
         listenerOrderPriceList = new View.OnTouchListener() {
             @Override
             public boolean onTouch(View view, MotionEvent motionEvent) {
@@ -375,7 +398,11 @@ public class Widjet extends Service implements ModelObs {
                 //System.out.println("gerty"+ObservableSave.getObs().getLastError());
                 break;
             case 1:
-                getPricecList(priceSell, priceBuy);
+                if (!boolMinWiew) {
+                    getPricecList(priceSell, priceBuy);
+                }else{
+                    getPricecListMin(priceSell, priceBuy);
+                }
                 break;
             case 2:
                 setAccountB(account);
@@ -612,17 +639,49 @@ public class Widjet extends Service implements ModelObs {
         });
 
         settingLay.addView(check_myBalance);
+
         Button butGrav = new Button(Widjet.this);
         butGrav.setText(R.string.grav);
         butGrav.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                if (myParams.gravity == Gravity.RIGHT) {myParams.gravity = Gravity.LEFT;}
-                else {myParams.gravity = Gravity.RIGHT;}
-                wm.updateViewLayout(tr, myParams);
+                if (!boolMinWiew) {
+                    if (myParams.gravity == Gravity.RIGHT) {
+                        myParams.gravity = Gravity.LEFT;
+                    } else {
+                        myParams.gravity = Gravity.RIGHT;
+                    }
+                    wm.updateViewLayout(tr, myParams);
+                }else{
+                    if (myParamsMin.gravity == (Gravity.RIGHT | Gravity.TOP)) {
+                        myParamsMin.gravity = (Gravity.CENTER_HORIZONTAL | Gravity.TOP);
+                    } else {
+                        myParamsMin.gravity = (Gravity.RIGHT | Gravity.TOP);
+                    }
+                    wm.updateViewLayout(trmin, myParamsMin);
+                }
             }
         });
         settingLay.addView(butGrav);
+
+        Button buttonMin = new Button(Widjet.this);
+        buttonMin.setText("MinView");
+        buttonMin.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                boolMinWiew = !boolMinWiew;
+
+                buttonMin.setText(boolMinWiew+"");
+                if (boolMinWiew) {
+                    try {wm.removeView(tr);} catch (Exception e) {};
+                    wm.addView(trmin,myParamsMin);
+                }else{
+                    try {wm.removeView(trmin);} catch (Exception e) {};
+                    wm.addView(tr, myParams);
+                }
+            }
+        });
+        settingLay.addView(buttonMin);
 
         wm.addView(trSetting, mySetting);
     }
@@ -867,6 +926,50 @@ public class Widjet extends Service implements ModelObs {
 
 
         }
+    }
+
+    public void getPricecListMin(List<OrderBookEntry> priceSell, List<OrderBookEntry> priceBuy) {
+        if (priceSell.size()>0 && priceBuy.size()>0) {
+            widgetScrLayMin.removeAllViews();
+
+            MyWidgetButton butttestsell = new MyWidgetButton(this);
+            //LinearGradient lg = new LinearGradient(0, 0, 10, 10,
+            //       new int[]{Color.GREEN, Color.GREEN, Color.WHITE, Color.WHITE},
+            //       new float[]{0,0.5f,.55f,1}, Shader.TileMode.REPEAT);
+            butttestsell.setTextColor(Color.rgb(255, 100, 100));
+            butttestsell.setBackgroundColor(Color.BLACK);
+            butttestsell.setTextSize(12.0f);
+
+            butttestsell.setPadding(5, 0, 5, 0);
+
+            OrderBookEntry sellorderbook = priceSell.get(0);
+            String priceText = sellorderbook.getPrice();
+            double priceTe = Double.parseDouble(priceText);
+            butttestsell.setText(priceTe + "");
+            butttestsell.setMaxHeight(20);
+
+            MyWidgetButton butttestbuy = new MyWidgetButton(this);
+            //LinearGradient lg = new LinearGradient(0, 0, 10, 10,
+            //       new int[]{Color.GREEN, Color.GREEN, Color.WHITE, Color.WHITE},
+            //       new float[]{0,0.5f,.55f,1}, Shader.TileMode.REPEAT);
+            butttestbuy.setTextColor(Color.rgb(100, 255, 100));
+            butttestbuy.setBackgroundColor(Color.BLACK);
+            butttestbuy.setTextSize(12.0f);
+
+            butttestbuy.setPadding(5, 0, 5, 0);
+
+            OrderBookEntry sellorderbook2 = priceBuy.get(0);
+            String priceText2 = sellorderbook2.getPrice();
+            double priceTe2 = Double.parseDouble(priceText2);
+            butttestbuy.setText(priceTe2 + "");
+            butttestbuy.setMaxHeight(20);
+
+
+            widgetScrLayMin.addView(butttestsell);
+            widgetScrLayMin.addView(butttestbuy);
+        }
+
+        widgetScrLayMin.setOnClickListener(listenerOrderPriceListMin);
     }
 
     public void getPricecList(List<OrderBookEntry> priceSell, List<OrderBookEntry> priceBuy){

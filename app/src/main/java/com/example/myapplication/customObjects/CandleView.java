@@ -96,8 +96,8 @@ public class CandleView extends View {
         period = BinanceState.getInstance().getLongInterval();
         //canvasSize = ;
         //mScaleFactor = 1f;
-        if (endTimeView==0l) endTimeView = listCandleSt.get(listCandleSt.size()-1).getCloseTime();
-        if (startTimeView==0l) startTimeView = endTimeView - period*10;
+        if (endTimeView==0l) endTimeView = listCandleSt.get(listCandleSt.size()-1).getCloseTime() + period*5;
+        if (startTimeView==0l) startTimeView = endTimeView - period*70 + period*5;
 
 
         //test
@@ -138,7 +138,13 @@ public class CandleView extends View {
                 }
                 //paint.setStyle(Paint.Style.FILL);
                 //System.out.println("tessssssssdfdg"+":"+(int)((timeOpen-nachTime)*getWidth()/widthTime)+":"+(int)((maxPri-open)*getWidth()/widthPri)+":"+(int)((timeClose-nachTime)*getWidth()/widthTime)+":"+(int)((maxPri-close)*getWidth()/widthPri));
-                Rect rect = new Rect((int)((timeOpen-nachTime)*getWidth()/widthTime), (int)((maxPri-open)*getHeight()/widthPri),(int)((timeClose-nachTime)*getWidth()/widthTime),(int)((maxPri-close)*getHeight()/widthPri));
+                int closePoint = (int)((maxPri-close)*getHeight()/widthPri);
+                int openPoint = (int)((maxPri-open)*getHeight()/widthPri);
+                if (closePoint == openPoint) {
+                    openPoint = closePoint + 1;
+                }
+
+                Rect rect = new Rect((int)((timeOpen-nachTime)*getWidth()/widthTime), openPoint,(int)((timeClose-nachTime)*getWidth()/widthTime),closePoint);
                 //Rect rect = new Rect(200, 150, 400, 200);
                 //mCanvas.drawCircle(10, 100, 50, paint);
                 mCanvas.drawRect(rect, paint);
